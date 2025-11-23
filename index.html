@@ -4,380 +4,514 @@
   <meta charset="utf-8" />
   <title>Follow-up Ticket Status — BA IT</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Check your BA support ticket by ticket number and name." />
   <style>
     :root{
-      --blue:#0a6bff;
-      --muted:#6c7680;
-      --bg:#f5f7fb;
+      --bg:#f4f6f8;
       --card:#ffffff;
-      --accent:#0a3ea8;
-      --danger:#b93b3b;
-      --ok:#2b7a2b;
+      --muted:#8b97a4;
+      --blue:#0a6bff;
+      --accent:#0a6bff;
+      --success:#138000;
+      --danger:#b71c1c;
+      --shadow:0 8px 30px rgba(18,24,32,0.06);
+      --radius:12px;
+      --maxw:920px;
     }
     html,body{height:100%}
     body{
-      margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background:linear-gradient(180deg,#f7f8fb 0%, #f3f6fa 100%);color:#111;
-      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+      margin:0;
+      font-family:Inter, Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:#111;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px 18px;
+      display:flex;
+      justify-content:center;
     }
-    .wrap{max-width:980px;margin:28px auto;padding:18px}
-    header{display:block;text-align:center;margin-bottom:18px}
-    header img{width:100%;max-height:140px;object-fit:cover;border-radius:8px;box-shadow:0 6px 20px rgba(10,10,20,.06)}
-    .card{background:var(--card);border-radius:14px;padding:22px;box-shadow:0 12px 40px rgba(10,20,40,.06)}
+    .wrap{max-width:var(--maxw);width:100%}
+    header.header{
+      background:transparent;
+      padding:8px 0 18px 0;
+      text-align:center;
+    }
+    header.header img{max-width:100%;height:auto;border-radius:6px}
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+      margin-top:18px;
+    }
     h1{margin:0 0 8px 0;font-size:22px}
-    p.hint{margin:6px 0 16px;color:var(--muted);font-size:14px}
-    .row{display:flex;gap:14px;align-items:stretch}
-    .col{flex:1;min-width:0}
+    p.hint{margin:0 0 18px 0;color:var(--muted);font-size:14px}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+    @media (max-width:880px){ .grid{grid-template-columns:1fr} }
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type="text"]{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #e8edf2;font-size:15px;box-sizing:border-box;background:#fbfdff}
-    .controls{margin-top:16px;display:flex;gap:12px;align-items:center}
-    .btn{background:var(--blue);color:#fff;border:0;padding:10px 16px;border-radius:9px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(10,107,255,.14)}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .link{color:var(--blue);text-decoration:none;margin-left:6px;font-weight:600}
-    .message{margin-top:12px;font-weight:600}
-    .message.ok{color:var(--ok)}
-    .message.err{color:var(--danger)}
-    .small{font-size:13px;color:var(--muted);margin-top:14px}
-    .result{margin-top:18px;border-radius:12px;padding:18px;border:1px solid #eef2f5;background:#ffffff}
-    .result-grid{display:grid;grid-template-columns:1fr 260px;gap:12px}
-    .left-dl dt{font-weight:700;color:#222;margin-top:6px}
-    .left-dl dd{margin:2px 0 8px 0;color:#333}
-    .badge{display:inline-block;padding:8px 12px;border-radius:12px;background:#eef6ff;color:var(--accent);font-weight:700;border:1px solid rgba(10,62,168,.06)}
-    .field-title{font-size:12px;color:var(--muted);margin-top:8px}
-    footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
-    @media (max-width:820px){
-      .result-grid{grid-template-columns:1fr;gap:12px}
-      .row{flex-direction:column}
+    input[type="text"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:8px;
+      border:1px solid #e6eaef;
+      box-sizing:border-box;
+      font-size:15px;
+      outline:none;
+      transition:box-shadow .12s, border-color .12s;
     }
+    input[type="text"]:focus{box-shadow:0 6px 18px rgba(10,107,255,0.08);border-color:var(--accent)}
+    .controls{margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .btn{
+      display:inline-block;padding:10px 16px;border-radius:10px;border:0;cursor:pointer;font-weight:700;
+      text-decoration:none;color:#fff;background:var(--blue);
+      box-shadow:0 6px 18px rgba(10,107,255,0.12)
+    }
+    .link{color:var(--blue);text-decoration:underline;cursor:pointer;background:none;border:0;padding:0;font-weight:600}
+    .status-msg{margin-top:10px;font-weight:700;color:var(--success)}
+    .note{margin-top:12px;color:var(--muted);font-size:13px}
+    /* ticket panel */
+    .ticket-panel{background:#fff;border-radius:10px;padding:18px;border:1px solid #f0f2f4;margin-top:14px}
+    .ticket-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+    .ticket-left{flex:1}
+    .ticket-right{width:220px;text-align:right}
+    .ticket-title{font-size:16px;font-weight:800;margin:0 0 6px 0}
+    .muted{color:var(--muted);font-size:13px}
+    .field{margin-top:12px}
+    .field strong{display:block;color:#222;margin-bottom:6px}
+    .value{font-size:15px;color:#111}
+    .badge{
+      display:inline-block;padding:8px 12px;border-radius:12px;background:#eef6ff;color:var(--blue);font-weight:700;font-size:13px;
+      box-shadow:0 4px 12px rgba(10,107,255,0.06)
+    }
+    .meta{font-size:12px;color:var(--muted);margin-top:8px}
+    /* internal notes */
+    .notes{background:#fafbfd;border-radius:8px;padding:12px;margin-top:12px;border:1px solid #eef2f6}
+    .small{font-size:13px;color:var(--muted)}
+    .error{color:var(--danger);font-weight:700}
+    footer{margin-top:30px;text-align:center;color:var(--muted);font-size:13px}
+    /* show more link */
+    .showmore{background:none;border:0;color:var(--blue);font-weight:700;cursor:pointer;padding:0;margin-left:6px}
   </style>
 </head>
 <body>
-  <div class="wrap" role="main">
-    <header>
-      <img src="header.png" alt="BA Information Technology Services" />
+  <div class="wrap">
+    <header class="header">
+      <!-- header.png should be in your repo root (you uploaded it as header.png) -->
+      <img src="header.png" alt="BA Information Technology Services header">
     </header>
 
-    <div class="card" aria-labelledby="pageTitle">
-      <h1 id="pageTitle">Follow-up Ticket Status</h1>
+    <div class="card" role="main" aria-labelledby="title">
+      <h1 id="title">Follow-up Ticket Status</h1>
       <p class="hint">Enter the <strong>Complete name</strong> you used in the form and your <strong>Ticket number</strong> (e.g. BA-0053).</p>
 
-      <div class="row" aria-hidden="false">
-        <div class="col">
+      <div class="grid">
+        <div>
           <label for="clientName">Complete name (from the form)</label>
-          <input id="clientName" type="text" placeholder="e.g. Juan Dela Cruz" autocomplete="name"/>
+          <input id="clientName" type="text" placeholder="Jane Dela Cruz">
+
         </div>
-        <div class="col" style="flex:0 0 260px">
+        <div>
           <label for="ticketNumber">Ticket number</label>
-          <input id="ticketNumber" type="text" placeholder="e.g. BA-0053" autocomplete="off"/>
+          <input id="ticketNumber" type="text" placeholder="BA-0053">
         </div>
       </div>
 
       <div class="controls">
-        <button id="checkBtn" class="btn" aria-live="polite">Check Ticket</button>
-        <a id="submitFormLink" class="link" href="https://forms.gle/QrGB6FrsphuRS8Bo9" target="_blank" rel="noopener">Submit a Concern</a>
-        <div style="flex:1"></div>
+        <button class="btn" id="checkBtn">Check Ticket</button>
+        <a class="link" id="submitLink" href="https://forms.gle/QrGB6FrsphuRS8Bo9" target="_blank" rel="noopener">Submit a Concern</a>
       </div>
 
-      <div id="message" class="message" aria-live="polite"></div>
+      <div id="statusMessage" class="status-msg" aria-live="polite" style="display:none"></div>
+      <div id="errorMessage" class="note" style="display:none"></div>
 
-      <div id="ticketArea" aria-live="polite"></div>
+      <!-- ticket result -->
+      <div id="ticketResult" class="ticket-panel" style="display:none">
+        <div class="ticket-row">
+          <div class="ticket-left">
+            <div class="ticket-title" id="ticketId">Ticket</div>
+            <div class="muted" id="clientLabel">Client</div>
+            <div class="field">
+              <strong>Submitted</strong>
+              <div class="value" id="submittedAt"></div>
+            </div>
 
-      <p class="small" style="display:none" id="legacyNote">Note: this page reads the published CSV of the Tickets sheet (hidden).</p>
+            <div class="field">
+              <strong>Location</strong>
+              <div class="value" id="location"></div>
+            </div>
+
+            <div class="field">
+              <strong>Concern</strong>
+              <div class="value" id="concern"></div>
+            </div>
+
+            <div id="internalNotesWrap" class="field" style="display:none">
+              <strong>Internal Notes</strong>
+              <div class="notes small" id="internalNotes"></div>
+            </div>
+          </div>
+
+          <div class="ticket-right">
+            <div style="text-align:right">
+              <div id="statusBadge" class="badge" aria-hidden="true">Status</div>
+            </div>
+
+            <div class="meta" style="margin-top:10px">
+              <div><strong>Assigned to</strong></div>
+              <div id="assignedTo" class="value" style="margin-bottom:10px"></div>
+
+              <div><strong>Resolved at</strong></div>
+              <div id="resolvedAt" class="value" style="margin-bottom:10px"></div>
+
+              <div><strong>Last Updated</strong></div>
+              <div id="lastUpdated" class="value"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <footer>BA Information Technology Services</footer>
   </div>
 
 <script>
-(() => {
-  // ---------- CONFIG ----------
-  const PUBLISHED_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?gid=60269729&single=true&output=csv';
-  const MAX_ATTEMPTS = 5;
-  const LOCKOUT_MS = 3 * 60 * 60 * 1000; // 3 hours
-  const ATTEMPT_STORE_KEY = 'ba_ticket_attempts_v1'; // localStorage key
-  // -----------------------------
+/*
+  Follow-up Ticket Status script
+  - Option B: Internal notes trimmed to 200 characters with "Show more"
+  - 5 attempt lockout for failed attempts (3 hours)
+  - Reads Tickets from published CSV (TICKETS_CSV_URL)
+  - Auto-detects headers so it adapts to current sheet column order
+*/
 
+(function(){
+  'use strict';
+
+  // -------------------------
+  // CONFIG - replace only if the published CSV URL changes
+  // (This was derived from the "publish to web" link you provided earlier)
+  // -------------------------
+  const TICKETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?output=csv&gid=60269729';
+  const MAX_NOTE_LENGTH = 200;   // Option B: trim internal notes
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_HOURS = 3; // hours
+
+  // element refs
   const clientNameEl = document.getElementById('clientName');
   const ticketNumberEl = document.getElementById('ticketNumber');
   const checkBtn = document.getElementById('checkBtn');
-  const messageEl = document.getElementById('message');
-  const ticketArea = document.getElementById('ticketArea');
+  const statusMessage = document.getElementById('statusMessage');
+  const errorMessage = document.getElementById('errorMessage');
+  const ticketResult = document.getElementById('ticketResult');
+  const ticketIdEl = document.getElementById('ticketId');
+  const clientLabelEl = document.getElementById('clientLabel');
+  const submittedAtEl = document.getElementById('submittedAt');
+  const locationEl = document.getElementById('location');
+  const concernEl = document.getElementById('concern');
+  const assignedToEl = document.getElementById('assignedTo');
+  const resolvedAtEl = document.getElementById('resolvedAt');
+  const lastUpdatedEl = document.getElementById('lastUpdated');
+  const statusBadgeEl = document.getElementById('statusBadge');
+  const internalNotesWrap = document.getElementById('internalNotesWrap');
+  const internalNotesEl = document.getElementById('internalNotes');
 
-  checkBtn.addEventListener('click', onCheck);
-  ticketNumberEl.addEventListener('keydown', e => { if(e.key === 'Enter') onCheck(); });
-  clientNameEl.addEventListener('keydown', e => { if(e.key === 'Enter') onCheck(); });
+  // localStorage keys
+  const ATTEMPTS_KEY = 'ba_followup_attempts';
 
-  function setMessage(text, type){ // type: 'ok' | 'err' | null
-    messageEl.textContent = text || '';
-    messageEl.className = 'message' + (type ? (type === 'ok'? ' ok': ' err') : '');
-  }
-
-  function normalize(s){ if(s===null||s===undefined) return ''; return String(s).trim().toLowerCase(); }
-
-  // localStorage helpers for attempts
-  function loadAttempts(){
-    try {
-      const raw = localStorage.getItem(ATTEMPT_STORE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) { return {}; }
-  }
-  function saveAttempts(obj){
-    try { localStorage.setItem(ATTEMPT_STORE_KEY, JSON.stringify(obj)); } catch(e){}
-  }
-  function getAttemptKey(name, ticket){
-    return 'k|' + normalize(name) + '|' + normalize(ticket);
-  }
-
-  function isLocked(name, ticket){
-    const attempts = loadAttempts();
-    const key = getAttemptKey(name,ticket);
-    const data = attempts[key];
-    if(!data) return false;
-    if(data.lockedUntil && Date.now() < data.lockedUntil) return {locked:true, until:data.lockedUntil};
-    return false;
-  }
-
-  function recordFailure(name, ticket){
-    const attempts = loadAttempts();
-    const key = getAttemptKey(name,ticket);
-    const now = Date.now();
-    let data = attempts[key] || { count:0, firstAt: now, lockedUntil: null };
-    // reset if firstAt older than LOCKOUT_MS*2 to avoid forever accumulation
-    if(now - (data.firstAt || 0) > LOCKOUT_MS * 24) { data = { count:0, firstAt: now, lockedUntil: null }; }
-    data.count = (data.count || 0) + 1;
-    if(data.count >= MAX_ATTEMPTS){
-      data.lockedUntil = now + LOCKOUT_MS;
+  // CSV parsing helper (handles quoted fields)
+  function parseCSV(text) {
+    const rows = [];
+    let cur = '', row = [], i = 0, inQuotes = false;
+    while (i < text.length) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (inQuotes && text[i+1] === '"') {
+          cur += '"'; i += 2; continue; // escaped quote
+        }
+        inQuotes = !inQuotes;
+        i++; continue;
+      }
+      if (!inQuotes && (ch === '\r' || ch === '\n')) {
+        if (ch === '\r' && text[i+1] === '\n') { i++; } // windows
+        row.push(cur); rows.push(row); row = []; cur = ''; i++; continue;
+      }
+      if (!inQuotes && ch === ',') {
+        row.push(cur); cur = ''; i++; continue;
+      }
+      cur += ch; i++;
     }
-    attempts[key] = data;
-    saveAttempts(attempts);
-    return data;
+    // push last
+    row.push(cur);
+    if (row.length > 1 || row[0] !== '') rows.push(row);
+    return rows;
   }
 
-  function clearAttempts(name, ticket){
-    const attempts = loadAttempts();
-    const key = getAttemptKey(name,ticket);
-    if(attempts[key]){ delete attempts[key]; saveAttempts(attempts); }
+  // Normalize strings for comparison
+  function normalize(s) {
+    return String(s || '').trim().toLowerCase().replace(/\s+/g,' ');
   }
 
-  // --- main handler
-  async function onCheck(){
-    setMessage('',null); ticketArea.innerHTML = '';
-    const name = (clientNameEl.value || '').trim();
-    const ticket = (ticketNumberEl.value || '').trim();
-    if(!name || !ticket){ setMessage('Please enter both name and ticket number.', 'err'); return; }
+  // Attempts handling
+  function getAttempts() {
+    try {
+      const raw = localStorage.getItem(ATTEMPTS_KEY);
+      if (!raw) return {count:0, blockedUntil:0};
+      return JSON.parse(raw);
+    } catch(e) { return {count:0, blockedUntil:0}; }
+  }
+  function setAttempts(attemptsObj) {
+    localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attemptsObj));
+  }
+  function recordFailure() {
+    const a = getAttempts();
+    a.count = (a.count || 0) + 1;
+    if (a.count >= MAX_ATTEMPTS) {
+      // block
+      const blockedUntil = Date.now() + LOCKOUT_HOURS * 60 * 60 * 1000;
+      a.blockedUntil = blockedUntil;
+    }
+    setAttempts(a);
+  }
+  function resetAttempts() {
+    setAttempts({count:0, blockedUntil:0});
+  }
 
-    // check for local lockout
-    const locked = isLocked(name,ticket);
-    if(locked && locked.locked){
-      const until = new Date(locked.until);
-      setMessage(`Too many failed attempts. You can try again after ${until.toLocaleString()}.`, 'err');
+  // UI helpers
+  function showError(msg) {
+    errorMessage.style.display = 'block';
+    errorMessage.className = 'note error';
+    errorMessage.textContent = msg;
+  }
+  function clearError() {
+    errorMessage.style.display = 'none';
+    errorMessage.textContent = '';
+  }
+  function showStatus(msg) {
+    statusMessage.style.display = 'block';
+    statusMessage.textContent = msg;
+  }
+  function clearStatus() {
+    statusMessage.style.display = 'none';
+    statusMessage.textContent = '';
+  }
+
+  // Render ticket object
+  function renderTicket(ticket, headerMap) {
+    ticketResult.style.display = 'block';
+    clearError();
+    showStatus('Ticket loaded.');
+
+    // Display basics
+    ticketIdEl.textContent = ticket[ headerMap.Ticket ] || ticket[ headerMap['ticket'] ] || 'Ticket';
+    clientLabelEl.textContent = ticket[ headerMap['Client Name'] ] || ticket[ headerMap['client name'] ] || ticket[ headerMap['client'] ] || '';
+    submittedAtEl.textContent = ticket[ headerMap['Timestamp'] ] || ticket[ headerMap['timestamp'] ] || '';
+    locationEl.textContent = ticket[ headerMap['Location'] ] || ticket[ headerMap['location'] ] || '';
+    concernEl.textContent = ticket[ headerMap['Concern'] ] || ticket[ headerMap['concern'] ] || '';
+    assignedToEl.textContent = ticket[ headerMap['Assigned To'] ] || ticket[ headerMap['assigned to'] ] || '';
+    resolvedAtEl.textContent = ticket[ headerMap['Resolved At'] ] || ticket[ headerMap['resolved at'] ] || '';
+    lastUpdatedEl.textContent = ticket[ headerMap['Last Updated'] ] || ticket[ headerMap['last updated'] ] || '';
+
+    // status
+    const status = ticket[ headerMap['Status'] ] || ticket[ headerMap['status'] ] || '';
+    statusBadgeEl.textContent = status || 'Status';
+    // color badge lightly by status text
+    if (/pending/i.test(status)) {
+      statusBadgeEl.style.background = '#fff7ed'; statusBadgeEl.style.color = '#a35a00';
+    } else if (/review/i.test(status)) {
+      statusBadgeEl.style.background = '#eef6ff'; statusBadgeEl.style.color = 'var(--blue)';
+    } else if (/clarif|clarification/i.test(status)) {
+      statusBadgeEl.style.background = '#fff7f7'; statusBadgeEl.style.color = '#b71c1c';
+    } else if (/succeed|success/i.test(status)) {
+      statusBadgeEl.style.background = '#f1faf3'; statusBadgeEl.style.color = '#138000';
+    } else {
+      statusBadgeEl.style.background = '#f3f5f7'; statusBadgeEl.style.color = '#566070';
+    }
+
+    // Internal Notes (col K or header name "Internal Note" etc.)
+    const internal = ticket[ headerMap['Internal Note'] ] || ticket[ headerMap['Internal Notes'] ] || ticket[ headerMap['internal note'] ] || ticket[ headerMap['internal notes'] ] || '';
+    if (internal && String(internal).trim() !== '') {
+      internalNotesWrap.style.display = 'block';
+      const txt = String(internal);
+      if (txt.length > MAX_NOTE_LENGTH) {
+        const short = txt.slice(0, MAX_NOTE_LENGTH);
+        internalNotesEl.innerHTML = escapeHtml(short) + '...';
+        // add show more toggle
+        const btn = document.createElement('button');
+        btn.className = 'showmore';
+        btn.textContent = 'Show more';
+        btn.onclick = function(){
+          if (btn.textContent === 'Show more') {
+            internalNotesEl.textContent = txt;
+            btn.textContent = 'Show less';
+          } else {
+            internalNotesEl.innerHTML = escapeHtml(short) + '...';
+            btn.textContent = 'Show more';
+          }
+        };
+        // clear old toggles
+        const existing = internalNotesEl.parentNode.querySelector('.showmore');
+        if (existing) existing.remove();
+        internalNotesEl.parentNode.appendChild(btn);
+      } else {
+        internalNotesEl.textContent = txt;
+      }
+    } else {
+      internalNotesWrap.style.display = 'none';
+      internalNotesEl.textContent = '';
+    }
+  }
+
+  // HTML-escape helper
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+  }
+
+  // main fetch & lookup
+  async function fetchAndFindTicket(clientName, ticketNumber) {
+    clearStatus(); clearError(); ticketResult.style.display = 'none';
+
+    // lockout check
+    const attempts = getAttempts();
+    if (attempts.blockedUntil && Date.now() < attempts.blockedUntil) {
+      const mins = Math.ceil((attempts.blockedUntil - Date.now()) / (60*1000));
+      showError('Too many failed attempts. Please try again after ' + mins + ' minutes.');
       return;
     }
 
-    checkBtn.disabled = true;
-    setMessage('Fetching tickets...', null);
+    showStatus('Loading ticket data...');
+
     try {
-      const csvText = await fetchCsv(PUBLISHED_CSV);
-      const { headerMap, rows } = parseCsvToRows(csvText);
+      const res = await fetch(TICKETS_CSV_URL, {cache:'no-store'});
+      const txt = await res.text();
 
-      if(rows.length === 0) throw new Error('empty-csv');
-
-      // header detection (tolerant)
-      const col = {
-        ticket: findHeader(headerMap, ['ticket','ticket number','ticket_no','ticket id','ticket id']),
-        clientName: findHeader(headerMap, ['client name','clientname','name','complete name','full name']),
-        timestamp: findHeader(headerMap, ['timestamp','submitted','submitted at','date']),
-        submitterEmail: findHeader(headerMap, ['submitter email','email','email address','submitter_email']),
-        location: findHeader(headerMap, ['location','service location','address']),
-        priority: findHeader(headerMap, ['priority']),
-        concern: findHeader(headerMap, ['concern','issue','description','type of request']),
-        status: findHeader(headerMap, ['status','st','state']),
-        assigned: findHeader(headerMap, ['assigned to','assigned','assigned_to','assignedto']),
-        resolvedAt: findHeader(headerMap, ['resolved at','resolved_at','resolved']),
-        lastUpdated: findHeader(headerMap, ['last updated','last_updated','lastupdated','last update','lastupdate'])
-      };
-
-      if(col.ticket === -1 || col.clientName === -1){
-        throw new Error('missing-columns');
+      // quick sanity check: ensure server returned CSV (not an HTML error page)
+      if (/<!doctype html|<html/i.test(txt.slice(0,500))) {
+        showError('The Tickets sheet could not be fetched. Ensure the sheet is published as CSV and the URL is correct.');
+        return;
       }
 
-      const tNorm = normalize(ticket);
-      let matchRow = null;
-      for(const r of rows){
-        const rTicket = normalize(r[col.ticket] || '');
-        if(rTicket === tNorm){
-          // ticket found; check name match
-          const rName = normalize(r[col.clientName] || '');
-          if(rName === normalize(name)){
-            matchRow = r; break;
+      // parse csv
+      const rows = parseCSV(txt);
+      if (!rows || rows.length < 2) {
+        showError('No ticket data found in the Tickets file.');
+        return;
+      }
+
+      // header mapping -> case-insensitive
+      const headerRow = rows[0].map(h => String(h||'').trim());
+      const headerMap = {}; // maps friendly names to index
+      headerRow.forEach((h, idx) => {
+        headerMap[h || ('col' + idx)] = idx;
+        headerMap[h.toLowerCase()] = idx;
+      });
+
+      // helper to get by header name key (try common variants)
+      function findIndexByNames(names) {
+        for (const n of names) {
+          if (headerMap.hasOwnProperty(n)) return headerMap[n];
+          if (headerMap.hasOwnProperty(n.toLowerCase())) return headerMap[n.toLowerCase()];
+        }
+        return -1;
+      }
+      // Build a friendly headerMap object mapping common names -> column index
+      const mapped = {};
+      mapped['Ticket'] = findIndexByNames(['Ticket','ticket']);
+      mapped['Timestamp'] = findIndexByNames(['Timestamp','timestamp','Submitted','submitted']);
+      mapped['Submitter Email'] = findIndexByNames(['Submitter Email','Email','email','submitter email']);
+      mapped['Client Name'] = findIndexByNames(['Client Name','Client','client name','client']);
+      mapped['Location'] = findIndexByNames(['Location','location','address']);
+      mapped['Priority'] = findIndexByNames(['Priority','priority']);
+      mapped['Concern'] = findIndexByNames(['Concern','concern','message','description']);
+      mapped['Status'] = findIndexByNames(['Status','status']);
+      mapped['Assigned To'] = findIndexByNames(['Assigned To','assigned to','assigned']);
+      mapped['Resolved At'] = findIndexByNames(['Resolved At','resolved at','resolved']);
+      mapped['Internal Note'] = findIndexByNames(['Internal Note','Internal Notes','internal note','internal notes','Internal Note(s)']);
+      mapped['Last Updated'] = findIndexByNames(['Last Updated','last updated','Last updated','LastUpdated']);
+
+      // find ticket row by ticket number
+      const wantedTicket = String(ticketNumber || '').trim();
+      if (!wantedTicket) { showError('Enter a ticket number.'); return; }
+
+      // iterate rows
+      let foundRow = null;
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r];
+        const tval = (mapped['Ticket'] >= 0) ? String(row[mapped['Ticket']] || '') : (row[0] || '');
+        if (normalize(tval) === normalize(wantedTicket)) {
+          // if client name also provided, match that too
+          const clientVal = (mapped['Client Name'] >= 0) ? String(row[mapped['Client Name']] || '') : (row[3] || '');
+          if (normalize(clientVal) === normalize(clientName)) {
+            foundRow = row;
+            break;
           } else {
-            // ticket found but name mismatch -> failure attempt
-            const data = recordFailure(name,ticket);
-            if(data.lockedUntil){
-              const until = new Date(data.lockedUntil);
-              setMessage(`Too many failed attempts. You can try again after ${until.toLocaleString()}.`, 'err');
+            // name mismatch -> not allowed (counts as failure)
+            recordFailure();
+            const attempts2 = getAttempts();
+            if (attempts2.blockedUntil && Date.now() < attempts2.blockedUntil) {
+              showError('Too many failed attempts. Please try again later.');
             } else {
-              setMessage('Ticket number found but the name does not match the name on the ticket. Use the exact name from the form (case-insensitive).', 'err');
+              showError('No matching ticket found. Make sure the name matches exactly the one you entered in the form.');
             }
             return;
           }
         }
       }
 
-      if(!matchRow){
-        const data = recordFailure(name,ticket);
-        if(data.lockedUntil){
-          const until = new Date(data.lockedUntil);
-          setMessage(`Too many failed attempts. You can try again after ${until.toLocaleString()}.`, 'err');
+      if (!foundRow) {
+        // no ticket found
+        recordFailure();
+        const attempts2 = getAttempts();
+        if (attempts2.blockedUntil && Date.now() < attempts2.blockedUntil) {
+          showError('Too many failed attempts. Please try again later.');
         } else {
-          const remaining = Math.max(0, MAX_ATTEMPTS - (data.count || 0));
-          setMessage(`No matching ticket found. Attempts remaining: ${remaining}`, 'err');
+          showError('No matching ticket found. Check your ticket number and name.');
         }
         return;
       }
 
-      // success: clear attempts for this key
-      clearAttempts(name,ticket);
+      // success -> reset attempts
+      resetAttempts();
 
-      // Render ticket details
-      const get = (idx) => (idx >= 0 ? (matchRow[idx] || '') : '');
+      // render
+      renderTicket(foundRow, mapped);
 
-      const statusText = escapeHtml(get(col.status) || '');
-      const lastUpdatedText = escapeHtml(get(col.lastUpdated) || '');
-
-      const html = `
-        <div class="result">
-          <div class="result-grid">
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                  <div class="field-title">Ticket</div>
-                  <div style="font-weight:700;font-size:16px">${escapeHtml(get(col.ticket))}</div>
-                  <div class="field-title" style="margin-top:10px">Client</div>
-                  <div style="font-size:15px">${escapeHtml(get(col.clientName))}</div>
-                </div>
-                <div style="text-align:right">
-                  <div class="badge">${statusText || 'Unknown'}</div>
-                  ${ lastUpdatedText ? `<div style="margin-top:8px;font-size:12px;color:var(--muted)">Last Updated<br><strong>${lastUpdatedText}</strong></div>` : '' }
-                </div>
-              </div>
-
-              <hr style="margin:12px 0;border:none;border-top:1px solid #f1f4f8">
-
-              <dl class="left-dl">
-                <dt>Submitted</dt><dd>${escapeHtml(get(col.timestamp) || '')}</dd>
-                <dt>Email</dt><dd>${escapeHtml(get(col.submitterEmail) || '')}</dd>
-                <dt>Location</dt><dd>${escapeHtml(get(col.location) || '')}</dd>
-                <dt>Priority</dt><dd>${escapeHtml(get(col.priority) || '')}</dd>
-                <dt>Concern</dt><dd>${escapeHtml(get(col.concern) || '')}</dd>
-              </dl>
-            </div>
-
-            <div>
-              <div style="font-weight:700;color:var(--muted);margin-bottom:8px">Assigned to</div>
-              <div style="font-size:15px;margin-bottom:12px">${escapeHtml(get(col.assigned) || '')}</div>
-
-              <div style="font-weight:700;color:var(--muted);margin-bottom:8px">Resolved at</div>
-              <div style="font-size:15px">${escapeHtml(get(col.resolvedAt) || '')}</div>
-
-              <!-- future: more staff-only info could go here (not shown to client) -->
-            </div>
-          </div>
-        </div>
-      `;
-
-      ticketArea.innerHTML = html;
-      setMessage('Ticket loaded.', 'ok');
-
-    } catch (err){
-      console.error(err);
-      const code = (err && err.message) ? err.message : '';
-      if(code === 'empty-csv'){
-        setMessage('The published sheet returned an empty CSV. Confirm you published the correct Tickets sheet tab.', 'err');
-      } else if(code === 'missing-columns'){
-        setMessage('The Tickets CSV is missing required columns (Ticket or Client Name).', 'err');
-      } else if(code === 'server-returned-html'){
-        setMessage('The published link returned HTML instead of CSV. Re-publish the sheet to the web and try again.', 'err');
-      } else {
-        setMessage('Error fetching tickets: ' + (err && err.message ? err.message : String(err)), 'err');
-      }
+    } catch (err) {
+      console.error('fetch error', err);
+      showError('Error fetching tickets: ' + (err && err.message ? err.message : 'Network error'));
     } finally {
-      checkBtn.disabled = false;
+      clearStatus();
     }
   }
 
-  // fetch CSV text and do a quick validation: if HTML seems returned, throw special error
-  async function fetchCsv(url){
-    const res = await fetch(url, { cache: 'no-store', credentials: 'omit' });
-    if(!res.ok) throw new Error('Network error: ' + res.status);
-    const text = await res.text();
-    const trimmed = text.trim();
-    if(trimmed.startsWith('<') || trimmed.toLowerCase().includes('<!doctype html') || trimmed.toLowerCase().includes('<html')){
-      // HTML returned -> publish issue
-      const e = new Error('server-returned-html');
-      throw e;
-    }
-    return text;
-  }
+  // wire up
+  checkBtn.addEventListener('click', function(){
+    clearError(); clearStatus();
+    ticketResult.style.display = 'none';
+    const name = clientNameEl.value || '';
+    const ticket = ticketNumberEl.value || '';
+    // simple validation
+    if (!ticket.trim()) { showError('Please enter a ticket number.'); return; }
+    if (!name.trim()) { showError('Please enter the complete name used in the form.'); return; }
 
-  // parse CSV into headerMap and rows (arrays)
-  function parseCsvToRows(csvText){
-    // Simple CSV parse that handles quoted fields.
-    const rows = [];
-    let cur = '', inQuotes = false, row = [], i=0;
-    while(i < csvText.length){
-      const ch = csvText[i];
-      if(inQuotes){
-        if(ch === '"'){
-          if(csvText[i+1] === '"'){ cur += '"'; i+=2; continue; }
-          inQuotes = false; i++; continue;
-        } else {
-          cur += ch; i++; continue;
-        }
-      } else {
-        if(ch === '"'){ inQuotes = true; i++; continue; }
-        if(ch === ','){ row.push(cur); cur = ''; i++; continue; }
-        if(ch === '\r'){ i++; continue; }
-        if(ch === '\n'){ row.push(cur); rows.push(row); row = []; cur = ''; i++; continue; }
-        cur += ch; i++;
+    // check lockout
+    const att = getAttempts();
+    if (att.blockedUntil && Date.now() < att.blockedUntil) {
+      const mins = Math.ceil((att.blockedUntil - Date.now()) / (60*1000));
+      showError('Too many failed attempts. Please try again after ' + mins + ' minutes.');
+      return;
+    }
+
+    fetchAndFindTicket(name, ticket);
+  });
+
+  // allow Enter key
+  [clientNameEl, ticketNumberEl].forEach(el=>{
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        checkBtn.click();
       }
-    }
-    // leftover
-    if(cur !== '' || row.length){
-      row.push(cur);
-      rows.push(row);
-    }
-
-    if(rows.length === 0) return { headerMap: {}, rows: [] };
-
-    const headers = rows[0].map(h => String(h||'').trim());
-    const headerMap = {};
-    for(let j=0;j<headers.length;j++){
-      headerMap[normalize(headers[j])] = j;
-    }
-    const dataRows = rows.slice(1);
-    return { headerMap, rows: dataRows };
-  }
-
-  function findHeader(headerMap, candidates){
-    for(const c of candidates){
-      const k = normalize(c);
-      if(k in headerMap) return headerMap[k];
-    }
-    // try substring fallback
-    for(const key in headerMap){
-      for(const c of candidates){
-        if(key.indexOf(normalize(c)) !== -1) return headerMap[key];
-      }
-    }
-    return -1;
-  }
-
-  function escapeHtml(s){
-    return String(s || '').replace(/[&<>"']/g, (c)=>({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    })[c]);
-  }
+    });
+  });
 
 })();
 </script>

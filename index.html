@@ -61,8 +61,14 @@
   </div>
 
   <script>
-    // Public spreadsheet endpoint for Tickets sheet (gviz JSON wrapper)
-    const sheetURL = "https://docs.google.com/spreadsheets/d/13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ/gviz/tq?tqx=out:json&sheet=Tickets";
+    // -- CONFIG: spreadsheet id and sheet name (Tickets)
+    const SPREADSHEET_ID = "13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ";
+    const SHEET_NAME = "Tickets";
+
+    // gviz JSON endpoint (first attempt)
+    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    // CSV fallback (second attempt)
+    const CSV_FALLBACK = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
     const errorEl = document.getElementById('error');
     const resultEl = document.getElementById('result');
@@ -78,31 +84,15 @@
       return String(s||'').replace(/\D/g,'');
     }
 
-    // Given parsed gviz JSON, provide column indices based on headers or fixed layout
-    function pickColumns(parsed){
-      // If headers available, use them
+    // pick columns based on either headers or fixed layout (your current sheet order)
+    function pickColumnsFromParsed(parsed){
       const cols = (parsed.table && parsed.table.cols) ? parsed.table.cols : [];
       const labels = cols.map(c => (String(c && c.label || '').toLowerCase().trim()));
-
-      // default layout (as per your sheet screenshots)
       const defaults = {
-        ticket: 0,
-        timestamp: 1,
-        submitterEmail: 2,
-        clientName: 3,     // D
-        location: 4,       // E
-        priority: 5,
-        concern: 6,        // G
-        status: 7,         // H
-        assigned: 8,       // I
-        resolvedAt: 9,     // J
-        internalNote: 10,  // K (do not show to clients)
-        formRowId: 11,
-        responseLink: 12,
-        lastUpdated: 13
+        ticket: 0, clientName: 3, status: 7,
+        concern: 6, assigned: 8, location: 4,
+        resolvedAt: 9, responseLink: 12, lastUpdated: 13
       };
-
-      // helper to find label by keywords
       function findIndexByKeywords(words){
         for (let i=0;i<labels.length;i++){
           for (let w of words){
@@ -112,29 +102,86 @@
         }
         return -1;
       }
-
-      // Try header detection first (more robust)
-      const ticketIdx = findIndexByKeywords(['ticket']) !== -1 ? findIndexByKeywords(['ticket']) : defaults.ticket;
-      const nameIdx = findIndexByKeywords(['client name','full name','name','submitter']) !== -1 ? findIndexByKeywords(['client name','full name','name','submitter']) : defaults.clientName;
-      const statusIdx = findIndexByKeywords(['status','state']) !== -1 ? findIndexByKeywords(['status','state']) : defaults.status;
-      const concernIdx = findIndexByKeywords(['concern','issue','description','type']) !== -1 ? findIndexByKeywords(['concern','issue','description','type']) : defaults.concern;
-      const assignedIdx = findIndexByKeywords(['assign','assigned to','assignee']) !== -1 ? findIndexByKeywords(['assign','assigned to','assignee']) : defaults.assigned;
-      const locationIdx = findIndexByKeywords(['location','address','service location']) !== -1 ? findIndexByKeywords(['location','address','service location']) : defaults.location;
-      const resolvedIdx = findIndexByKeywords(['resolved','resolved at','date resolved']) !== -1 ? findIndexByKeywords(['resolved','resolved at','date resolved']) : defaults.resolvedAt;
-      const lastUpdatedIdx = findIndexByKeywords(['last updated','last update','updated']) !== -1 ? findIndexByKeywords(['last updated','last update','updated']) : defaults.lastUpdated;
-      const responseLinkIdx = findIndexByKeywords(['response link','follow','follow-up','response link']) !== -1 ? findIndexByKeywords(['response link','follow','follow-up','response link']) : defaults.responseLink;
-
       return {
-        ticket: ticketIdx,
-        name: nameIdx,
-        status: statusIdx,
-        concern: concernIdx,
-        assigned: assignedIdx,
-        location: locationIdx,
-        resolvedAt: resolvedIdx,
-        lastUpdated: lastUpdatedIdx,
-        responseLink: responseLinkIdx
+        ticket: findIndexByKeywords(['ticket']) !== -1 ? findIndexByKeywords(['ticket']) : defaults.ticket,
+        name: findIndexByKeywords(['client name','full name','name','submitter']) !== -1 ? findIndexByKeywords(['client name','full name','name','submitter']) : defaults.clientName,
+        status: findIndexByKeywords(['status','state']) !== -1 ? findIndexByKeywords(['status','state']) : defaults.status,
+        concern: findIndexByKeywords(['concern','issue','description']) !== -1 ? findIndexByKeywords(['concern','issue','description']) : defaults.concern,
+        assigned: findIndexByKeywords(['assign','assigned','assignee']) !== -1 ? findIndexByKeywords(['assign','assigned','assignee']) : defaults.assigned,
+        location: findIndexByKeywords(['location','address']) !== -1 ? findIndexByKeywords(['location','address']) : defaults.location,
+        resolvedAt: findIndexByKeywords(['resolved','resolved at','date resolved']) !== -1 ? findIndexByKeywords(['resolved','resolved at','date resolved']) : defaults.resolvedAt,
+        responseLink: findIndexByKeywords(['response','response link','follow-up','follow up']) !== -1 ? findIndexByKeywords(['response','response link','follow-up','follow up']) : defaults.responseLink,
+        lastUpdated: findIndexByKeywords(['last updated','last update','updated']) !== -1 ? findIndexByKeywords(['last updated','last update','updated']) : defaults.lastUpdated
       };
+    }
+
+    // small CSV parser that handles quoted fields (basic)
+    function parseCSV(str){
+      const rows = [];
+      let cur = '', inQuotes = false, row = [];
+      for (let i=0;i<str.length;i++){
+        const ch = str[i];
+        const nxt = str[i+1];
+        if (ch === '"' ){
+          if (inQuotes && nxt === '"'){ cur += '"'; i++; continue; }
+          inQuotes = !inQuotes;
+          continue;
+        }
+        if (!inQuotes && ch === ','){ row.push(cur); cur = ''; continue; }
+        if (!inQuotes && (ch === '\n' || ch === '\r')){
+          if (ch === '\r' && str[i+1] === '\n'){ continue; } // let \n handle
+          // end of row
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = '';
+          continue;
+        }
+        cur += ch;
+      }
+      // push last cell/row
+      if (cur !== '' || row.length > 0){
+        row.push(cur);
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    // try fetch gviz JSON, fall back to CSV
+    async function fetchSheet(){
+      try {
+        const res = await fetch(GVIZ_URL, {cache: "no-store"});
+        const text = await res.text();
+        // if server returned HTML (login/interstitial) -> fallback
+        if (/<!doctype html|google drive|page not found|sign in/i.test(text.substring(0,1000))){
+          // fallback to CSV
+          const csvRes = await fetch(CSV_FALLBACK, {cache: "no-store"});
+          const csvText = await csvRes.text();
+          // if csvRes also returned html, throw to caller
+          if (/<!doctype html|google drive|page not found|sign in/i.test(csvText.substring(0,1000))){
+            throw new Error('Server returned HTML (not JSON or CSV). Confirm the Tickets sheet is publicly viewable (Anyone with the link — Viewer).');
+          }
+          // parse CSV into an object similar to gviz
+          const rows = parseCSV(csvText);
+          // first row are headers
+          const headers = rows[0] || [];
+          const table = { cols: headers.map(h => ({label: h})), rows: rows.slice(1).map(r => ({c: r.map(cell => ({v: cell}))})) };
+          return { table };
+        } else {
+          // extract JSON object inside wrapper (gviz returns something like: /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+          const firstBrace = text.indexOf('{');
+          const lastBrace = text.lastIndexOf('}');
+          if (firstBrace === -1 || lastBrace === -1) throw new Error('Unexpected GVIZ response format (no JSON braces)');
+          const jsonStr = text.substring(firstBrace, lastBrace+1);
+          return JSON.parse(jsonStr);
+        }
+      } catch (err){
+        throw err;
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s||'').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }
 
     async function checkTicket(){
@@ -158,48 +205,13 @@
       btn.textContent = 'Checking…';
 
       try {
-        const res = await fetch(sheetURL, {cache: "no-store"});
-        const text = await res.text();
+        const parsed = await fetchSheet();
+        const rl = (parsed.table && parsed.table.rows) ? parsed.table.rows : [];
+        const plainRows = rl.map(r => (r.c||[]).map(c => (c && (typeof c.v !== 'undefined') ? c.v : '')));
 
-        // If HTML error (Drive or not accessible)
-        if (/google drive|sorry unable to open the file|page not found|403|404|<!doctype html>/i.test(text)){
-          errorEl.textContent = 'The Tickets sheet could not be fetched. Make sure the sheet is shared "Anyone with the link — Viewer".';
-          debugEl.style.display = 'block';
-          debugEl.textContent = 'Server returned HTML or error page. Confirm sharing and that the URL is correct.';
-          btn.disabled = false;
-          btn.textContent = 'Check Ticket';
-          return;
-        }
+        const cols = pickColumnsFromParsed(parsed);
 
-        // extract JSON object inside wrapper
-        const firstBrace = text.indexOf('{');
-        const lastBrace = text.lastIndexOf('}');
-        if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace){
-          errorEl.textContent = 'Unexpected response format from the Tickets sheet.';
-          debugEl.style.display = 'block';
-          debugEl.textContent = text.slice(0,800);
-          btn.disabled = false;
-          btn.textContent = 'Check Ticket';
-          return;
-        }
-        const jsonStr = text.substring(firstBrace, lastBrace + 1);
-        let parsed;
-        try { parsed = JSON.parse(jsonStr); } catch (e){
-          errorEl.textContent = 'Error parsing sheet data (invalid JSON).';
-          debugEl.style.display = 'block';
-          debugEl.textContent = 'JSON parse error: ' + (e && e.message) + '\n\nPreview:\n' + jsonStr.slice(0,800);
-          btn.disabled = false;
-          btn.textContent = 'Check Ticket';
-          return;
-        }
-
-        const rows = (parsed.table && parsed.table.rows) ? parsed.table.rows : [];
-        const plainRows = rows.map(r => (r.c||[]).map(c => (c && (typeof c.v !== 'undefined') ? c.v : '')));
-
-        // choose columns (prefer explicit layout but try headers)
-        const cols = pickColumns(parsed);
-
-        // Search for match: ticket number numeric and normalized name in clientName column (col D / index 3)
+        // search
         let found = null;
         for (let r of plainRows){
           const sheetTicketRaw = String(r[cols.ticket] || '');
@@ -213,14 +225,14 @@
         }
 
         if (!found){
-          // detect whether ticket exists with different name
+          // try to detect ticket exists with different name
           let ticketExists = false;
           for (let r of plainRows){
             const st = normalizeTicketRaw(String(r[cols.ticket] || ''));
             if (st === ticketNumeric){ ticketExists = true; break; }
           }
           if (ticketExists){
-            errorEl.textContent = 'Ticket found but the name does not match. Use the exact full name you entered in the form (spacing and case are tolerant).';
+            errorEl.textContent = 'Ticket found but name does not match. Use the exact full name you entered in the form (spacing is flexible, case ignored).';
           } else {
             errorEl.textContent = 'No matching ticket found. Double-check the ticket number and name in your confirmation email.';
           }
@@ -229,8 +241,8 @@
           return;
         }
 
-        // Gather fields using chosen indices
-        function getField(row, idx){ return (idx >= 0) ? (row[idx] || '') : ''; }
+        // display fields
+        const getField = (row, idx) => idx >= 0 ? (row[idx] || '') : '';
         const ticketDisplay = getField(found, cols.ticket);
         const clientName = getField(found, cols.name);
         const location = getField(found, cols.location);
@@ -241,7 +253,6 @@
         const lastUpdated = getField(found, cols.lastUpdated) || '—';
         const responseLink = getField(found, cols.responseLink) || '';
 
-        // status pill
         let badgeClass = 'pending';
         const s = String(status || '').toLowerCase();
         if (s.includes('review')) badgeClass='reviewing';
@@ -249,7 +260,6 @@
         else if (s.includes('fail')) badgeClass='failed';
         else if (s.includes('succ')) badgeClass='succeeded';
 
-        // Build client-visible details (do NOT include internal note column)
         resultEl.innerHTML = `
           <div class="ticket-box" role="region" aria-label="Ticket details">
             <div class="row"><span class="label">Ticket:</span> ${escapeHtml(ticketDisplay)}</div>
@@ -264,17 +274,13 @@
           </div>
         `;
       } catch (err){
-        errorEl.textContent = 'Unexpected error while fetching tickets.';
+        errorEl.textContent = 'The spreadsheet could not be fetched. Ensure the Tickets sheet is shared as "Anyone with the link — Viewer".';
         debugEl.style.display = 'block';
         debugEl.textContent = (err && err.message) ? err.message : String(err);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Check Ticket';
       }
-    }
-
-    function escapeHtml(s){
-      return String(s||'').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }
   </script>
 </body>

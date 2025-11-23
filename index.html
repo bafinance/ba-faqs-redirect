@@ -3,23 +3,68 @@
 <head>
   <meta charset="utf-8">
   <title>Redirecting to BA FAQs…</title>
+
+  <!-- Forces Gmail/Drive to stop embedding the page (fix for Android phones) -->
+  <meta http-equiv="X-Frame-Options" content="deny">
+
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <!-- Immediate redirect to the WebApp (works on mobile) -->
-  <meta http-equiv="refresh" content="0;url=https://script.google.com/macros/s/AKfycbxse2RDLhC5kS1sD7WMXHxg3wAK8NVcNiKxg5oFnbfSayUBBR9NBRmSEpjW-Dir4npYYg/exec">
+
+  <!-- Immediate redirect to the WebApp -->
+  <meta http-equiv="refresh" content="0;url=https://script.google.com/macros/s/AKfycbwCinvx9cDyEk5J8wckWNbaikP7lL_J08R-HTVC2QUUfD2nYf-BDWRjdQcddcXJor8LOA/exec">
+
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#0a0f24;color:#fff;margin:0;padding:40px;display:flex;align-items:center;justify-content:center;min-height:100vh}
-    .box{max-width:640px;width:100%;background:#fff;border-radius:12px;padding:22px;color:#222;box-shadow:0 6px 20px rgba(0,0,0,.12);text-align:center}
-    a.button{display:inline-block;margin-top:14px;padding:10px 18px;background:#0a6bff;color:#fff;border-radius:8px;text-decoration:none;font-weight:700}
-    p{margin:10px 0;color:#444}
-    h1{font-size:20px;margin:0 0 6px 0}
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0a0f24;
+      color: #fff;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .box {
+      max-width: 640px;
+      width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px;
+      color: #222;
+      box-shadow: 0 6px 20px rgba(0,0,0,.12);
+      text-align: center;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 10px 18px;
+      background: #0a6bff;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    p { margin: 10px 0; color: #444; }
+    h1 { font-size: 20px; margin: 0 0 6px 0; }
   </style>
 </head>
+
 <body>
   <div class="box" role="main">
     <h1>Redirecting to BA FAQs…</h1>
     <p>If you are not redirected automatically, tap the button below.</p>
-    <a class="button" href="https://script.google.com/macros/s/AKfycbxse2RDLhC5kS1sD7WMXHxg3wAK8NVcNiKxg5oFnbfSayUBBR9NBRmSEpjW-Dir4npYYg/exec" target="_blank" rel="noopener">Open BA FAQs</a>
-    <p style="font-size:12px;opacity:.7;margin-top:12px">If the WebApp requires sign-in, make sure you open in the same Google account that has access.</p>
+
+    <!-- Button fallback -->
+    <a class="button"
+       href="https://script.google.com/macros/s/AKfycbwCinvx9cDyEk5J8wckWNbaikP7lL_J08R-HTVC2QUUfD2nYf-BDWRjdQcddcXJor8LOA/exec"
+       target="_blank"
+       rel="noopener">
+      Open BA FAQs
+    </a>
+
+    <p style="font-size:12px;opacity:.7;margin-top:12px">
+      If the WebApp requires sign-in, ensure you are using the correct Google account.
+    </p>
   </div>
 </body>
 </html>

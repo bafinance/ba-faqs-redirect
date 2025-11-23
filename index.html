@@ -61,7 +61,7 @@
   </div>
 
   <script>
-    // Public spreadsheet endpoint (Google Visualization API JSON)
+    // Public spreadsheet endpoint for Tickets sheet (gviz JSON wrapper)
     const sheetURL = "https://docs.google.com/spreadsheets/d/13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ/gviz/tq?tqx=out:json&sheet=Tickets";
 
     const errorEl = document.getElementById('error');
@@ -78,23 +78,63 @@
       return String(s||'').replace(/\D/g,'');
     }
 
-    // Try to locate a header column by checking parsed.table.cols[].label
-    function findHeaderIndex(parsed, candidates, fallbackList){
+    // Given parsed gviz JSON, provide column indices based on headers or fixed layout
+    function pickColumns(parsed){
+      // If headers available, use them
       const cols = (parsed.table && parsed.table.cols) ? parsed.table.cols : [];
       const labels = cols.map(c => (String(c && c.label || '').toLowerCase().trim()));
-      // try candidates
-      for (let cand of candidates){
+
+      // default layout (as per your sheet screenshots)
+      const defaults = {
+        ticket: 0,
+        timestamp: 1,
+        submitterEmail: 2,
+        clientName: 3,     // D
+        location: 4,       // E
+        priority: 5,
+        concern: 6,        // G
+        status: 7,         // H
+        assigned: 8,       // I
+        resolvedAt: 9,     // J
+        internalNote: 10,  // K (do not show to clients)
+        formRowId: 11,
+        responseLink: 12,
+        lastUpdated: 13
+      };
+
+      // helper to find label by keywords
+      function findIndexByKeywords(words){
         for (let i=0;i<labels.length;i++){
-          if (!labels[i]) continue;
-          if (labels[i].includes(cand)) return i;
+          for (let w of words){
+            if (!labels[i]) continue;
+            if (labels[i].includes(w)) return i;
+          }
         }
+        return -1;
       }
-      // if none matched, use fallback list sequence to return first valid fallback
-      for (let f of fallbackList || []){
-        if (f >= 0 && f < cols.length) return f;
-      }
-      // last resort: return -1
-      return -1;
+
+      // Try header detection first (more robust)
+      const ticketIdx = findIndexByKeywords(['ticket']) !== -1 ? findIndexByKeywords(['ticket']) : defaults.ticket;
+      const nameIdx = findIndexByKeywords(['client name','full name','name','submitter']) !== -1 ? findIndexByKeywords(['client name','full name','name','submitter']) : defaults.clientName;
+      const statusIdx = findIndexByKeywords(['status','state']) !== -1 ? findIndexByKeywords(['status','state']) : defaults.status;
+      const concernIdx = findIndexByKeywords(['concern','issue','description','type']) !== -1 ? findIndexByKeywords(['concern','issue','description','type']) : defaults.concern;
+      const assignedIdx = findIndexByKeywords(['assign','assigned to','assignee']) !== -1 ? findIndexByKeywords(['assign','assigned to','assignee']) : defaults.assigned;
+      const locationIdx = findIndexByKeywords(['location','address','service location']) !== -1 ? findIndexByKeywords(['location','address','service location']) : defaults.location;
+      const resolvedIdx = findIndexByKeywords(['resolved','resolved at','date resolved']) !== -1 ? findIndexByKeywords(['resolved','resolved at','date resolved']) : defaults.resolvedAt;
+      const lastUpdatedIdx = findIndexByKeywords(['last updated','last update','updated']) !== -1 ? findIndexByKeywords(['last updated','last update','updated']) : defaults.lastUpdated;
+      const responseLinkIdx = findIndexByKeywords(['response link','follow','follow-up','response link']) !== -1 ? findIndexByKeywords(['response link','follow','follow-up','response link']) : defaults.responseLink;
+
+      return {
+        ticket: ticketIdx,
+        name: nameIdx,
+        status: statusIdx,
+        concern: concernIdx,
+        assigned: assignedIdx,
+        location: locationIdx,
+        resolvedAt: resolvedIdx,
+        lastUpdated: lastUpdatedIdx,
+        responseLink: responseLinkIdx
+      };
     }
 
     async function checkTicket(){
@@ -121,33 +161,30 @@
         const res = await fetch(sheetURL, {cache: "no-store"});
         const text = await res.text();
 
-        // If the fetch returned an HTML error page (Drive "Sorry..." or other), detect and warn
-        if (/google drive|sorry unable to open the file|page not found|403|404/i.test(text)){
-          errorEl.textContent = 'The spreadsheet could not be fetched. Ensure the Tickets sheet is shared as "Anyone with the link — Viewer".';
+        // If HTML error (Drive or not accessible)
+        if (/google drive|sorry unable to open the file|page not found|403|404|<!doctype html>/i.test(text)){
+          errorEl.textContent = 'The Tickets sheet could not be fetched. Make sure the sheet is shared "Anyone with the link — Viewer".';
           debugEl.style.display = 'block';
-          debugEl.textContent = 'Server returned HTML (not JSON). If you see a Google Drive error, re-check the sheet sharing settings and that the file is publicly viewable.';
+          debugEl.textContent = 'Server returned HTML or error page. Confirm sharing and that the URL is correct.';
           btn.disabled = false;
           btn.textContent = 'Check Ticket';
           return;
         }
 
-        // Extract JSON object inside wrapper (Google returns something like: /*O_o*/\ngoogle.visualization.Query.setResponse({...}); )
+        // extract JSON object inside wrapper
         const firstBrace = text.indexOf('{');
         const lastBrace = text.lastIndexOf('}');
         if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace){
-          errorEl.textContent = 'Unexpected response format from the sheet.';
+          errorEl.textContent = 'Unexpected response format from the Tickets sheet.';
           debugEl.style.display = 'block';
           debugEl.textContent = text.slice(0,800);
           btn.disabled = false;
           btn.textContent = 'Check Ticket';
           return;
         }
-
         const jsonStr = text.substring(firstBrace, lastBrace + 1);
         let parsed;
-        try {
-          parsed = JSON.parse(jsonStr);
-        } catch (e){
+        try { parsed = JSON.parse(jsonStr); } catch (e){
           errorEl.textContent = 'Error parsing sheet data (invalid JSON).';
           debugEl.style.display = 'block';
           debugEl.textContent = 'JSON parse error: ' + (e && e.message) + '\n\nPreview:\n' + jsonStr.slice(0,800);
@@ -156,32 +193,19 @@
           return;
         }
 
-        // map rows to plain arrays
         const rows = (parsed.table && parsed.table.rows) ? parsed.table.rows : [];
         const plainRows = rows.map(r => (r.c||[]).map(c => (c && (typeof c.v !== 'undefined') ? c.v : '')));
 
-        // detect columns by header label (robust)
-        // candidate lists (look for these words inside header)
-        const ticketCol = findHeaderIndex(parsed, ['ticket'], [0]);
-        // name candidates - try many variants
-        const nameCol = findHeaderIndex(parsed, ['client name','full name','name','submitter name','client'], [3,2,4]);
-        const locationCol = findHeaderIndex(parsed, ['location','service location','address'], [4]);
-        const concernCol = findHeaderIndex(parsed, ['concern','issue','description','type of request','message'], [6]);
-        const statusCol = findHeaderIndex(parsed, ['status','state'], [7]);
-        const assignedCol = findHeaderIndex(parsed, ['assigned','assigned to','assignee'], [8]);
-        const lastUpdatedCol = findHeaderIndex(parsed, ['last updated','last update','updated'], [11]);
+        // choose columns (prefer explicit layout but try headers)
+        const cols = pickColumns(parsed);
 
-        // If ticketCol is -1 treat as 0
-        const tcol = (ticketCol >= 0) ? ticketCol : 0;
-
-        // Now search for matching record (ticket numeric and name normalized)
+        // Search for match: ticket number numeric and normalized name in clientName column (col D / index 3)
         let found = null;
         for (let r of plainRows){
-          const sheetTicketRaw = String(r[tcol]||'');
+          const sheetTicketRaw = String(r[cols.ticket] || '');
           const sheetTicketNumeric = normalizeTicketRaw(sheetTicketRaw);
-          const sheetName = (nameCol >= 0) ? normalizeName(r[nameCol] || '') : '';
-          // fallback: also try index 3 or 2 in case header detection failed
-          if (!sheetName && r[3]) { /* nothing, sheetName empty */ }
+          const sheetNameRaw = String(r[cols.name] || '');
+          const sheetName = normalizeName(sheetNameRaw);
           if (sheetTicketNumeric && sheetTicketNumeric === ticketNumeric && sheetName === nameIn){
             found = r;
             break;
@@ -189,36 +213,35 @@
         }
 
         if (!found){
-          // if not found, check if ticket number exists with different name
+          // detect whether ticket exists with different name
           let ticketExists = false;
           for (let r of plainRows){
-            const sheetTicketNumeric = normalizeTicketRaw(String(r[tcol]||''));
-            if (sheetTicketNumeric === ticketNumeric){
-              ticketExists = true;
-              break;
-            }
+            const st = normalizeTicketRaw(String(r[cols.ticket] || ''));
+            if (st === ticketNumeric){ ticketExists = true; break; }
           }
           if (ticketExists){
-            errorEl.textContent = 'Ticket found but the name does not match. Please use the exact full name you entered in the form (case and spacing do not matter).';
+            errorEl.textContent = 'Ticket found but the name does not match. Use the exact full name you entered in the form (spacing and case are tolerant).';
           } else {
-            errorEl.textContent = 'No matching ticket found. Check the Ticket number and the name in your confirmation email.';
+            errorEl.textContent = 'No matching ticket found. Double-check the ticket number and name in your confirmation email.';
           }
           btn.disabled = false;
           btn.textContent = 'Check Ticket';
           return;
         }
 
-        // Extract fields using detected indices (use safe defaults if detection failed)
-        const getField = (row, idx, fallback='') => (idx >= 0 ? (row[idx] || '') : fallback);
-        const ticketDisplay = getField(found, tcol, '');
-        const clientName = getField(found, nameCol, getField(found,3,''));
-        const location = getField(found, locationCol, getField(found,4,''));
-        const concern = getField(found, concernCol, getField(found,6,''));
-        const status = getField(found, statusCol, getField(found,7,'Pending Request'));
-        const assigned = getField(found, assignedCol, getField(found,8,'—'));
-        const lastUpdated = getField(found, lastUpdatedCol, getField(found,11,'—'));
+        // Gather fields using chosen indices
+        function getField(row, idx){ return (idx >= 0) ? (row[idx] || '') : ''; }
+        const ticketDisplay = getField(found, cols.ticket);
+        const clientName = getField(found, cols.name);
+        const location = getField(found, cols.location);
+        const concern = getField(found, cols.concern);
+        const status = getField(found, cols.status) || 'Pending';
+        const assigned = getField(found, cols.assigned) || '—';
+        const resolvedAt = getField(found, cols.resolvedAt) || '—';
+        const lastUpdated = getField(found, cols.lastUpdated) || '—';
+        const responseLink = getField(found, cols.responseLink) || '';
 
-        // choose pill class
+        // status pill
         let badgeClass = 'pending';
         const s = String(status || '').toLowerCase();
         if (s.includes('review')) badgeClass='reviewing';
@@ -226,6 +249,7 @@
         else if (s.includes('fail')) badgeClass='failed';
         else if (s.includes('succ')) badgeClass='succeeded';
 
+        // Build client-visible details (do NOT include internal note column)
         resultEl.innerHTML = `
           <div class="ticket-box" role="region" aria-label="Ticket details">
             <div class="row"><span class="label">Ticket:</span> ${escapeHtml(ticketDisplay)}</div>
@@ -234,7 +258,9 @@
             <div class="row"><span class="label">Concern:</span> ${escapeHtml(concern)}</div>
             <div class="row"><span class="label">Assigned To:</span> ${escapeHtml(assigned)}</div>
             <div class="row"><span class="label">Status:</span> <span class="status-pill ${badgeClass}">${escapeHtml(status)}</span></div>
+            <div class="row"><span class="label">Resolved At:</span> ${escapeHtml(resolvedAt)}</div>
             <div class="row"><span class="label">Last Updated:</span> ${escapeHtml(lastUpdated)}</div>
+            ${ responseLink ? `<div class="row"><a href="${escapeHtml(responseLink)}" target="_blank" rel="noopener">Follow-up Ticket Status link</a></div>` : '' }
           </div>
         `;
       } catch (err){

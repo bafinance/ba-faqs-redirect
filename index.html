@@ -31,12 +31,10 @@
     .link{color:var(--blue);text-decoration:none;margin-left:6px}
     .status{margin-top:12px;color:#b93b3b;font-weight:600}
     .small{font-size:13px;color:var(--muted);margin-top:10px}
-    /* result */
     .result{margin-top:18px;border-radius:10px;padding:14px;border:1px dashed #e6eaef;background:#fbfdff}
     .result dt{font-weight:700;color:#233}
     .result dd{margin:0 0 8px 0;color:#333}
     .badge{float:right;padding:6px 10px;border-radius:8px;background:#f1f6ff;color:#0a3ea8;font-weight:700}
-    /* responsive */
     @media (max-width:640px){
       .row{flex-direction:column}
       header img{max-height:120px}
@@ -47,7 +45,6 @@
 <body>
   <div class="wrap">
     <header>
-      <!-- header.png must exist in repo root -->
       <img src="header.png" alt="BA Information Technology Services" />
     </header>
 
@@ -75,11 +72,11 @@
       </div>
 
       <div id="message" class="status" aria-live="polite"></div>
-
       <div id="ticketArea"></div>
 
       <p class="small">
-        <strong>Note:</strong> If the page shows "Server returned HTML", open your Google Sheet and choose <em>File → Publish to the web</em> (Publish entire document). Sharing the sheet as "Anyone with the link — Viewer" is not always sufficient for the public JSON endpoint used here.
+        Note: this page reads the published CSV of the Tickets sheet. If you see a message about HTML or "could not be fetched",
+        make sure you used <strong>File → Publish to the web</strong> (and then refresh this page).
       </p>
     </div>
 
@@ -88,28 +85,10 @@
 
 <script>
 (() => {
-  // CONFIG - do NOT change name of this var; if you do, change here and in code below.
-  const SHEET_ID = '13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ';
-  const SHEET_NAME = 'Tickets'; // sheet tab name exact
+  // ----- CONFIG: this is the published CSV link you provided -----
+  const PUBLISHED_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?gid=60269729&single=true&output=csv';
+  // ----------------------------------------------------------------
 
-  // Mapping: these are 0-based indexes of columns IN THE Tickets sheet
-  // Based on your sheet: A=Ticket, B=Timestamp, C=Submitter Email, D=Client Name, E=Location, F=Priority, G=Concern, H=Status, I=Assigned To, J=Resolved At, K=Internal Notes, ... N=Last Updated (maybe)
-  const COL = {
-    ticket: 0,
-    timestamp: 1,
-    submitterEmail: 2,
-    clientName: 3,
-    location: 4,
-    priority: 5,
-    concern: 6,
-    status: 7,
-    assignedTo: 8,
-    resolvedAt: 9,
-    // internalNotes: 10, // intentionally omitted from client view
-    // formRow / responseLink / lastUpdated may be after
-  };
-
-  // UI elements
   const clientNameEl = document.getElementById('clientName');
   const ticketNumberEl = document.getElementById('ticketNumber');
   const checkBtn = document.getElementById('checkBtn');
@@ -124,173 +103,185 @@
     messageEl.innerHTML = html || '';
     messageEl.style.color = danger ? '#b93b3b' : '#2b7a2b';
   }
+  function clearResult(){ ticketArea.innerHTML = ''; }
+  function showResultHtml(html){ ticketArea.innerHTML = html; }
 
-  function clearResult(){
-    ticketArea.innerHTML = '';
-  }
-
-  function showResultHtml(html){
-    ticketArea.innerHTML = html;
-  }
-
-  function normalize(s){
-    if(!s && s!==0) return '';
-    return String(s).trim().toLowerCase();
-  }
+  function normalize(s){ if(!s && s!==0) return ''; return String(s).trim().toLowerCase(); }
 
   async function onCheck(){
-    clearResult();
-    setMessage('');
+    clearResult(); setMessage('');
     const name = clientNameEl.value || '';
     const ticket = ticketNumberEl.value || '';
-    if(!name || !ticket){
-      setMessage('Enter both name and ticket number.', true);
-      return;
-    }
+    if(!name || !ticket){ setMessage('Enter both name and ticket number.', true); return; }
 
-    setMessage('Fetching ticket — please wait...');
+    setMessage('Fetching tickets...');
     checkBtn.disabled = true;
-
     try {
-      const rows = await fetchSheetRows();
-      setMessage(''); // clear
+      const csv = await fetchCsv(PUBLISHED_CSV);
+      const { headerMap, rows } = parseCsvToRows(csv);
 
-      // find match by ticket first (ticket numbers unique)
+      if(rows.length === 0){ throw new Error('empty-csv'); }
+
+      // find header column indexes by common names
+      // tolerant matching:
+      const col = {
+        ticket: findHeader(headerMap, ['ticket','ticket number','ticket_no','ticket_no.','ticket_id']),
+        clientName: findHeader(headerMap, ['client name','clientname','name','complete name','full name']),
+        timestamp: findHeader(headerMap, ['timestamp','submitted','date','submitted at']),
+        submitterEmail: findHeader(headerMap, ['submitter email','email','email address']),
+        location: findHeader(headerMap, ['location','service location','address']),
+        priority: findHeader(headerMap, ['priority']),
+        concern: findHeader(headerMap, ['concern','issue','description']),
+        status: findHeader(headerMap, ['status']),
+        assigned: findHeader(headerMap, ['assigned to','assigned','assigned_to']),
+        resolvedAt: findHeader(headerMap, ['resolved at','resolved_at','resolved'])
+      };
+
+      // We require at least ticket and clientName columns
+      if(col.ticket === -1 || col.clientName === -1){
+        throw new Error('missing-columns');
+      }
+
       const ticketNorm = normalize(ticket);
-      let found = null;
+      let foundRow = null;
       for(const r of rows){
-        const cellTicket = normalize(r[COL.ticket]);
-        if(cellTicket === ticketNorm){
-          // ticket matched; now check name
-          const sheetName = normalize(r[COL.clientName] || r[COL.clientName === undefined ? 3 : COL.clientName]);
-          if(sheetName === normalize(name)){
-            found = r;
-            break;
+        const tval = normalize(r[col.ticket] || '');
+        if(tval === ticketNorm){
+          const nval = normalize(r[col.clientName] || '');
+          if(nval === normalize(name)){
+            foundRow = r; break;
           } else {
-            // ticket matched but name mismatch -> show helpful error
-            setMessage('Ticket number found but the name you entered does not match the name on the ticket. Use the exact name from the form (no case sensitivity).', true);
+            setMessage('Ticket number found but the name does not match the name on the ticket. Use the exact name from the form (case-insensitive).', true);
             return;
           }
         }
       }
 
-      if(!found){
-        setMessage('No matching ticket found. Make sure the Ticket and Complete name match exactly the values submitted in the form.', true);
+      if(!foundRow){
+        setMessage('No matching ticket found. Make sure both Ticket and Complete name match exactly the ticket entry.', true);
         return;
       }
 
-      // Build result display
-      const resultHtml = buildResultHtml(found);
+      // Build display using foundRow and col indices
+      const get = idx => (idx >= 0 ? (foundRow[idx] || '') : '');
+      const resultHtml = `
+        <div class="result">
+          <div style="overflow:auto">
+            <div style="float:left">
+              <dl>
+                <dt>Ticket</dt><dd>${escapeHtml(get(col.ticket))}</dd>
+                <dt>Client</dt><dd>${escapeHtml(get(col.clientName))}</dd>
+              </dl>
+            </div>
+            <div style="float:right;text-align:right">
+              <div class="badge">${escapeHtml(get(col.status) || '')}</div>
+              <div style="clear:both"></div>
+            </div>
+          </div>
+          <div style="clear:both"></div>
+          <hr style="margin:10px 0;border:none;border-top:1px solid #eef2f5" />
+          <dl style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
+            <div><dt>Submitted</dt><dd>${escapeHtml(get(col.timestamp) || '')}</dd></div>
+            <div><dt>Assigned to</dt><dd>${escapeHtml(get(col.assigned) || '')}</dd></div>
+            <div><dt>Email</dt><dd>${escapeHtml(get(col.submitterEmail) || '')}</dd></div>
+            <div><dt>Resolved at</dt><dd>${escapeHtml(get(col.resolvedAt) || '')}</dd></div>
+            <div style="grid-column:1 / -1"><dt>Location</dt><dd>${escapeHtml(get(col.location) || '')}</dd></div>
+            <div style="grid-column:1 / -1"><dt>Priority</dt><dd>${escapeHtml(get(col.priority) || '')}</dd></div>
+            <div style="grid-column:1 / -1"><dt>Concern</dt><dd>${escapeHtml(get(col.concern) || '')}</dd></div>
+          </dl>
+        </div>
+      `;
       showResultHtml(resultHtml);
+      setMessage('Ticket loaded.', false);
 
     } catch (err) {
-      console.error('Fetch error', err);
-      const msg = err && err.message ? err.message : String(err);
-      // If server returned HTML (login page / drive page) we give clear instruction
-      if(msg.indexOf('server-returned-html') !== -1){
-        setMessage('The Tickets sheet could not be fetched. Make sure you published the sheet to the web (File → Publish to the web) and the sheet tab name is exactly "Tickets".', true);
+      console.error('Error', err);
+      const code = err && err.message ? err.message : '';
+      if(code === 'empty-csv'){
+        setMessage('The published sheet returned an empty CSV. Confirm you published the correct sheet tab.', true);
+      } else if(code === 'missing-columns'){
+        setMessage('The Tickets CSV is missing Ticket or Client Name columns. Make sure the Tickets sheet has headers.', true);
+      } else if(code === 'server-returned-html'){
+        setMessage('The published link returned HTML instead of CSV. Re-publish the sheet to the web and try again.', true);
       } else {
-        setMessage('Error fetching tickets: ' + msg, true);
+        setMessage('Error fetching tickets: ' + (err && err.message ? err.message : String(err)), true);
       }
     } finally {
       checkBtn.disabled = false;
     }
   }
 
-  function buildResultHtml(row){
-    // helper to pick column values safely
-    const val = (idx)=> (idx>=0 && idx < row.length ? (row[idx] == null ? '' : row[idx]) : '');
-    const fields = {
-      ticket: val(COL.ticket),
-      timestamp: val(COL.timestamp),
-      submitterEmail: val(COL.submitterEmail),
-      clientName: val(COL.clientName),
-      location: val(COL.location),
-      priority: val(COL.priority),
-      concern: val(COL.concern),
-      status: val(COL.status),
-      assignedTo: val(COL.assignedTo),
-      resolvedAt: val(COL.resolvedAt)
-    };
-
-    // create result markup
-    return `
-      <div class="result">
-        <div style="overflow:auto">
-          <div style="float:left">
-            <dl>
-              <dt>Ticket</dt><dd>${escapeHtml(fields.ticket || '')}</dd>
-              <dt>Client</dt><dd>${escapeHtml(fields.clientName || '')}</dd>
-            </dl>
-          </div>
-          <div style="float:right;text-align:right">
-            <div class="badge">${escapeHtml(fields.status||'')}</div>
-            <div style="clear:both"></div>
-          </div>
-        </div>
-        <div style="clear:both"></div>
-        <hr style="margin:10px 0;border:none;border-top:1px solid #eef2f5" />
-        <dl style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
-          <div><dt>Submitted</dt><dd>${escapeHtml(fields.timestamp||'')}</dd></div>
-          <div><dt>Assigned to</dt><dd>${escapeHtml(fields.assignedTo||'')}</dd></div>
-          <div><dt>Email</dt><dd>${escapeHtml(fields.submitterEmail||'')}</dd></div>
-          <div><dt>Resolved at</dt><dd>${escapeHtml(fields.resolvedAt||'')}</dd></div>
-          <div style="grid-column:1 / -1"><dt>Location</dt><dd>${escapeHtml(fields.location||'')}</dd></div>
-          <div style="grid-column:1 / -1"><dt>Priority</dt><dd>${escapeHtml(fields.priority||'')}</dd></div>
-          <div style="grid-column:1 / -1"><dt>Concern</dt><dd>${escapeHtml(fields.concern||'')}</dd></div>
-        </dl>
-      </div>
-    `;
+  // fetch CSV text and do a quick validation: if HTML seems returned, throw special error
+  async function fetchCsv(url){
+    const res = await fetch(url, { cache: 'no-store', credentials: 'omit' });
+    if(!res.ok) throw new Error('Network error: ' + res.status);
+    const text = await res.text();
+    const trimmed = text.trim();
+    if(trimmed.startsWith('<') || trimmed.toLowerCase().includes('<!doctype html') || trimmed.toLowerCase().includes('<html')){
+      // HTML returned -> publish issue
+      const e = new Error('server-returned-html');
+      throw e;
+    }
+    return text;
   }
 
-  // Simple HTML escape
+  // parse CSV into headerMap and rows (arrays)
+  function parseCsvToRows(csvText){
+    // Simple CSV parse that handles quoted fields.
+    const rows = [];
+    let cur = '', inQuotes = false, row = [], i=0;
+    while(i < csvText.length){
+      const ch = csvText[i];
+      if(inQuotes){
+        if(ch === '"'){
+          if(csvText[i+1] === '"'){ cur += '"'; i+=2; continue; }
+          inQuotes = false; i++; continue;
+        } else {
+          cur += ch; i++; continue;
+        }
+      } else {
+        if(ch === '"'){ inQuotes = true; i++; continue; }
+        if(ch === ','){ row.push(cur); cur = ''; i++; continue; }
+        if(ch === '\r'){ i++; continue; }
+        if(ch === '\n'){ row.push(cur); rows.push(row); row = []; cur = ''; i++; continue; }
+        cur += ch; i++;
+      }
+    }
+    // leftover
+    if(cur !== '' || row.length){
+      row.push(cur);
+      rows.push(row);
+    }
+
+    if(rows.length === 0) return { headerMap: {}, rows: [] };
+
+    const headers = rows[0].map(h => String(h||'').trim());
+    const headerMap = {};
+    for(let j=0;j<headers.length;j++){
+      headerMap[normalize(headers[j])] = j;
+    }
+    const dataRows = rows.slice(1);
+    return { headerMap, rows: dataRows };
+  }
+
+  function findHeader(headerMap, candidates){
+    for(const c of candidates){
+      const k = normalize(c);
+      if(k in headerMap) return headerMap[k];
+    }
+    // also try simple substring match (less strict)
+    for(const key in headerMap){
+      for(const c of candidates){
+        if(key.indexOf(normalize(c)) !== -1) return headerMap[key];
+      }
+    }
+    return -1;
+  }
+
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, (c)=>({
       '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
     })[c]);
-  }
-
-  // Fetch sheet rows using gviz JSON endpoint and return a simple array-of-arrays
-  async function fetchSheetRows(){
-    // Use Google visualization API json endpoint for public sheets
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=out:json`;
-    const res = await fetch(url, { credentials: 'omit', cache: 'no-store' });
-    if(!res.ok){
-      throw new Error('Network response was not ok (' + res.status + ')');
-    }
-    const text = await res.text();
-
-    // If server returned HTML (login page / drive UI), quick detect:
-    const ttrim = text.trim();
-    if(ttrim.startsWith('<')){
-      // HTML returned instead of JSON -> probably not published to web
-      const err = new Error('server-returned-html');
-      err.detail = 'Server returned HTML (not JSON). Confirm sheet is published to web.';
-      throw err;
-    }
-
-    // Google wraps JSON in various prefixes. The common wrappers:
-    // 1) /*O_o*/\ngoogle.visualization.Query.setResponse({...});
-    // 2) /**/ google.visualization.Query.setResponse(...)
-    // We'll extract the {...} object:
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if(start === -1 || end === -1){
-      throw new Error('Unexpected server response (no JSON found).');
-    }
-    const jsonText = text.slice(start, end+1);
-    let obj;
-    try {
-      obj = JSON.parse(jsonText);
-    } catch (e) {
-      console.error('JSON parse failed', e, jsonText.slice(0,200));
-      throw new Error('Unexpected server response (invalid JSON).');
-    }
-
-    // Now parse the visualization response table -> convert to array of simple values
-    if(!obj.table || !obj.table.rows) return [];
-    const rows = obj.table.rows.map(r => (r.c || []).map(cell => (cell && typeof cell.v !== 'undefined') ? cell.v : ''));
-    return rows;
   }
 
 })();

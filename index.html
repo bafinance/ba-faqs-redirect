@@ -8,12 +8,12 @@
   <style>
     :root{--blue:#0a6bff;--muted:#6c7680;--bg:#f5f7fb;--card:#ffffff}
     body{margin:0;background:var(--bg);font-family:Inter,Arial,Helvetica,sans-serif;color:#111}
-    .wrap{max-width:820px;margin:18px auto;padding:18px}
+    .wrap{max-width:920px;margin:18px auto;padding:18px}
     .header-img{width:100%;border-radius:12px;margin-bottom:18px;object-fit:cover}
     .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 30px rgba(10,20,40,.06)}
     h1{margin:0 0 8px 0;font-size:22px}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    .grid{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:12px}
+    .grid{display:grid;grid-template-columns:1fr 260px;gap:12px;margin-bottom:12px}
     input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eaf0;font-size:15px}
     .btn{background:var(--blue);color:#fff;border:0;padding:10px 14px;border-radius:9px;font-weight:700;cursor:pointer}
     .link{font-size:14px;color:var(--blue);margin-left:10px;text-decoration:none;font-weight:600}
@@ -25,11 +25,13 @@
     .pending{background:#6c7680}.reviewing{background:#0a6bff}.clarifying{background:#ca8a04}.failed{background:#d32f2f}.succeeded{background:#2e7d32}
     .muted{color:#6c7680;font-size:13px;margin-top:6px}
     .small{font-size:13px;color:#6c7680}
+    footer{margin-top:28px;text-align:center;color:#9aa0a6;font-size:13px}
+    code.debug{display:block;white-space:pre-wrap;background:#fff;padding:10px;border-radius:6px;margin-top:12px;border:1px solid #eee}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- header.png must be in the repository root (you already uploaded it) -->
+    <!-- header.png must exist in repo root -->
     <img src="header.png" alt="BA Information Technology Services" class="header-img">
 
     <div class="card" role="main" aria-labelledby="title">
@@ -54,10 +56,12 @@
       <div id="result" aria-live="polite"></div>
       <div id="debug" class="muted" style="display:none"></div>
     </div>
+
+    <footer>BA Information Technology Services</footer>
   </div>
 
   <script>
-    // Public spreadsheet endpoint (Google Visualization API, JSON output)
+    // Public spreadsheet endpoint (Google Visualization API JSON)
     const sheetURL = "https://docs.google.com/spreadsheets/d/13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ/gviz/tq?tqx=out:json&sheet=Tickets";
 
     const errorEl = document.getElementById('error');
@@ -71,8 +75,26 @@
       return String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
     }
     function normalizeTicketRaw(s){
-      // return digits only (so BA-0016, 0016, -0016 all match)
       return String(s||'').replace(/\D/g,'');
+    }
+
+    // Try to locate a header column by checking parsed.table.cols[].label
+    function findHeaderIndex(parsed, candidates, fallbackList){
+      const cols = (parsed.table && parsed.table.cols) ? parsed.table.cols : [];
+      const labels = cols.map(c => (String(c && c.label || '').toLowerCase().trim()));
+      // try candidates
+      for (let cand of candidates){
+        for (let i=0;i<labels.length;i++){
+          if (!labels[i]) continue;
+          if (labels[i].includes(cand)) return i;
+        }
+      }
+      // if none matched, use fallback list sequence to return first valid fallback
+      for (let f of fallbackList || []){
+        if (f >= 0 && f < cols.length) return f;
+      }
+      // last resort: return -1
+      return -1;
     }
 
     async function checkTicket(){
@@ -81,8 +103,10 @@
       debugEl.style.display = 'none';
       debugEl.textContent = '';
 
-      const nameIn = normalizeName(document.getElementById('name').value);
+      const nameInRaw = document.getElementById('name').value;
       const ticketInRaw = document.getElementById('ticket').value.trim();
+
+      const nameIn = normalizeName(nameInRaw);
       const ticketNumeric = normalizeTicketRaw(ticketInRaw);
 
       if (!nameIn || !ticketNumeric){
@@ -97,24 +121,23 @@
         const res = await fetch(sheetURL, {cache: "no-store"});
         const text = await res.text();
 
-        // Detect clearly wrong HTML (Drive "Sorry..." page etc)
+        // If the fetch returned an HTML error page (Drive "Sorry..." or other), detect and warn
         if (/google drive|sorry unable to open the file|page not found|403|404/i.test(text)){
-          errorEl.textContent = 'The spreadsheet could not be fetched. Make sure the Tickets sheet is shared as "Anyone with the link — Viewer".';
+          errorEl.textContent = 'The spreadsheet could not be fetched. Ensure the Tickets sheet is shared as "Anyone with the link — Viewer".';
           debugEl.style.display = 'block';
-          debugEl.textContent = 'Server returned HTML (not JSON). If you see a Google Drive error page, re-check the sheet sharing and that the file is publicly viewable.';
+          debugEl.textContent = 'Server returned HTML (not JSON). If you see a Google Drive error, re-check the sheet sharing settings and that the file is publicly viewable.';
           btn.disabled = false;
           btn.textContent = 'Check Ticket';
           return;
         }
 
-        // Extract JSON object inside callback wrapper if present.
-        // Google returns something like: /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+        // Extract JSON object inside wrapper (Google returns something like: /*O_o*/\ngoogle.visualization.Query.setResponse({...}); )
         const firstBrace = text.indexOf('{');
         const lastBrace = text.lastIndexOf('}');
         if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace){
-          errorEl.textContent = 'Error fetching tickets: response not in expected format.';
+          errorEl.textContent = 'Unexpected response format from the sheet.';
           debugEl.style.display = 'block';
-          debugEl.textContent = text.slice(0,500);
+          debugEl.textContent = text.slice(0,800);
           btn.disabled = false;
           btn.textContent = 'Check Ticket';
           return;
@@ -125,7 +148,7 @@
         try {
           parsed = JSON.parse(jsonStr);
         } catch (e){
-          errorEl.textContent = 'Error fetching tickets: returned data is not valid JSON.';
+          errorEl.textContent = 'Error parsing sheet data (invalid JSON).';
           debugEl.style.display = 'block';
           debugEl.textContent = 'JSON parse error: ' + (e && e.message) + '\n\nPreview:\n' + jsonStr.slice(0,800);
           btn.disabled = false;
@@ -133,19 +156,32 @@
           return;
         }
 
-        // Rows are in parsed.table.rows ; each row's cells in .c
+        // map rows to plain arrays
         const rows = (parsed.table && parsed.table.rows) ? parsed.table.rows : [];
-        // map to plain arrays
         const plainRows = rows.map(r => (r.c||[]).map(c => (c && (typeof c.v !== 'undefined') ? c.v : '')));
 
-        // Attempt to find exact match by ticket numeric + name normalized
+        // detect columns by header label (robust)
+        // candidate lists (look for these words inside header)
+        const ticketCol = findHeaderIndex(parsed, ['ticket'], [0]);
+        // name candidates - try many variants
+        const nameCol = findHeaderIndex(parsed, ['client name','full name','name','submitter name','client'], [3,2,4]);
+        const locationCol = findHeaderIndex(parsed, ['location','service location','address'], [4]);
+        const concernCol = findHeaderIndex(parsed, ['concern','issue','description','type of request','message'], [6]);
+        const statusCol = findHeaderIndex(parsed, ['status','state'], [7]);
+        const assignedCol = findHeaderIndex(parsed, ['assigned','assigned to','assignee'], [8]);
+        const lastUpdatedCol = findHeaderIndex(parsed, ['last updated','last update','updated'], [11]);
+
+        // If ticketCol is -1 treat as 0
+        const tcol = (ticketCol >= 0) ? ticketCol : 0;
+
+        // Now search for matching record (ticket numeric and name normalized)
         let found = null;
         for (let r of plainRows){
-          // According to your sheet: index 0 = Ticket, 3 = Client Name, 4 = Location, 6 = Concern, 7 = Status, 8 = Assigned To, 11 = Last Updated
-          const sheetTicketRaw = String(r[0]||'');
+          const sheetTicketRaw = String(r[tcol]||'');
           const sheetTicketNumeric = normalizeTicketRaw(sheetTicketRaw);
-          const sheetName = normalizeName(r[3] || '');
-
+          const sheetName = (nameCol >= 0) ? normalizeName(r[nameCol] || '') : '';
+          // fallback: also try index 3 or 2 in case header detection failed
+          if (!sheetName && r[3]) { /* nothing, sheetName empty */ }
           if (sheetTicketNumeric && sheetTicketNumeric === ticketNumeric && sheetName === nameIn){
             found = r;
             break;
@@ -153,11 +189,11 @@
         }
 
         if (!found){
-          // not found — give a helpful message and show if the ticket exists but different name
-          // check if ticket number exists but name mismatch
+          // if not found, check if ticket number exists with different name
           let ticketExists = false;
           for (let r of plainRows){
-            if (normalizeTicketRaw(r[0]||'') === ticketNumeric){
+            const sheetTicketNumeric = normalizeTicketRaw(String(r[tcol]||''));
+            if (sheetTicketNumeric === ticketNumeric){
               ticketExists = true;
               break;
             }
@@ -172,15 +208,17 @@
           return;
         }
 
-        // Build the result block (do NOT include internal notes column)
-        const ticketDisplay = found[0] || '';
-        const clientName = found[3] || '';
-        const location = found[4] || '';
-        const concern = found[6] || '';
-        const status = found[7] || 'Pending';
-        const assigned = found[8] || '—';
-        const lastUpdated = found[11] || '—';
+        // Extract fields using detected indices (use safe defaults if detection failed)
+        const getField = (row, idx, fallback='') => (idx >= 0 ? (row[idx] || '') : fallback);
+        const ticketDisplay = getField(found, tcol, '');
+        const clientName = getField(found, nameCol, getField(found,3,''));
+        const location = getField(found, locationCol, getField(found,4,''));
+        const concern = getField(found, concernCol, getField(found,6,''));
+        const status = getField(found, statusCol, getField(found,7,'Pending Request'));
+        const assigned = getField(found, assignedCol, getField(found,8,'—'));
+        const lastUpdated = getField(found, lastUpdatedCol, getField(found,11,'—'));
 
+        // choose pill class
         let badgeClass = 'pending';
         const s = String(status || '').toLowerCase();
         if (s.includes('review')) badgeClass='reviewing';
@@ -199,7 +237,6 @@
             <div class="row"><span class="label">Last Updated:</span> ${escapeHtml(lastUpdated)}</div>
           </div>
         `;
-
       } catch (err){
         errorEl.textContent = 'Unexpected error while fetching tickets.';
         debugEl.style.display = 'block';
@@ -210,7 +247,6 @@
       }
     }
 
-    // small helper to avoid HTML injection
     function escapeHtml(s){
       return String(s||'').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }

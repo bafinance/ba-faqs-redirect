@@ -1,234 +1,430 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>BA Support Ticket Status</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta charset="utf-8" />
+  <title>Follow-up Ticket Status — BA Information Technology Services</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f4f6fb;
-      margin: 0;
-      padding: 0;
+    :root{
+      --blue:#0a6bff;
+      --purple:#7c3aed;
+      --brown:#a16207;
+      --red:#d93025;
+      --green:#16a34a;
+      --muted:#6c7680;
+      --card:#ffffff;
+      --bg:#f4f6fb;
+      --maxw:920px;
     }
-    .container {
-      max-width: 700px;
-      margin: 40px auto;
-      background: white;
-      padding: 25px 30px;
-      border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Arial,Helvetica,sans-serif;
+      background:var(--bg);
+      color:#111;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-    h1 {
-      text-align: center;
-      color: #0a2f66;
-      margin-bottom: 8px;
-      font-size: 26px;
-    }
-    .sub {
-      text-align: center;
-      color: #444;
-      font-size: 14px;
-      margin-bottom: 14px;
-    }
-
-    /* ---- FAQ LINK ---- */
-    .faq-link {
-      text-align: center;
-      margin-top: -5px;
-      margin-bottom: 25px;
-    }
-    .faq-link a {
-      color: #0a6bff;
-      font-weight: 700;
-      text-decoration: none;
-      font-size: 14px;
-    }
-    .faq-link a:hover {
-      text-decoration: underline;
+    .page{
+      max-width:var(--maxw);
+      margin:28px auto;
+      padding:0 18px;
     }
 
-    label {
-      font-weight: 600;
-      display: block;
-      margin-top: 14px;
-      color: #333;
+    /* header image (from repo) */
+    .header-wrap{
+      background:transparent;
+      display:flex;
+      justify-content:center;
+      margin-bottom:18px;
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-top: 6px;
-      font-size: 14px;
-    }
-    button {
-      width: 100%;
-      background: #0a6bff;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 700;
-      margin-top: 20px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #084ec7;
-    }
-    .error {
-      margin-top: 14px;
-      color: #d93025;
-      font-weight: 700;
-      text-align: center;
-    }
-    .ticket-box {
-      margin-top: 25px;
-      background: #f4f6fc;
-      padding: 16px;
-      border-radius: 10px;
-      border: 1px solid #d9e2ef;
-    }
-    .ticket-box div {
-      margin: 6px 0;
-    }
-    .label {
-      font-weight: 700;
-      color: #0a2f66;
+    .header-wrap img{
+      width:100%;
+      max-width:900px;
+      height:auto;
+      border-radius:6px;
+      box-shadow:0 6px 28px rgba(10,20,40,0.06);
+      display:block;
     }
 
-    /* STATUS COLOR TAG */
-    .status-tag {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      color: white;
-      float: right;
+    /* FAQ link directly under header */
+    .faq-row{
+      text-align:center;
+      margin:10px 0 18px;
+    }
+    .faq-row a{
+      color:var(--blue);
+      text-decoration:none;
+      font-weight:700;
+      font-size:15px;
+      padding:6px 10px;
+      border-radius:6px;
+    }
+    .faq-row a:hover{ text-decoration:underline; }
+
+    /* main card */
+    .card{
+      background:var(--card);
+      border-radius:14px;
+      padding:22px;
+      box-shadow:0 10px 28px rgba(12,24,48,0.06);
+    }
+    h1{
+      margin:0 0 6px 0;
+      font-size:20px;
+      color:#0e2460;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:14px;
     }
 
-    .pending { background:#f59e0b; }
-    .reviewing { background:#0a6bff; }
-    .clarifying { background:#f59e0b; }
-    .failed { background:#d93025; }
-    .succeeded { background:#16a34a; }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 280px;
+      gap:14px;
+      align-items:start;
+    }
+
+    label{ display:block; font-weight:600; color:#333; font-size:13px; margin-bottom:6px; }
+    input[type="text"]{
+      width:100%;
+      padding:12px;
+      border-radius:10px;
+      border:1px solid #e6e9ef;
+      font-size:14px;
+      outline:none;
+    }
+    input[type="text"]:focus{ box-shadow:0 0 0 4px rgba(10,107,255,0.08); border-color:var(--blue); }
+
+    .actions{
+      margin-top:14px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .btn{
+      display:inline-block;
+      background:var(--blue);
+      color:#fff;
+      padding:10px 16px;
+      border-radius:10px;
+      font-weight:700;
+      text-decoration:none;
+      border:none;
+      cursor:pointer;
+    }
+    .btn.secondary{
+      background:transparent;
+      color:var(--blue);
+      font-weight:700;
+      text-decoration:underline;
+      padding:0;
+      border:0;
+      cursor:pointer;
+    }
+
+    .msg{
+      margin-top:12px;
+      font-weight:700;
+      color:#0a6b2a; /* success */
+    }
+    .error{
+      margin-top:12px;
+      font-weight:700;
+      color:var(--red);
+    }
+
+    .ticket{
+      margin-top:20px;
+      background:#fbfdff;
+      border-radius:10px;
+      border:1px solid #e8eef7;
+      padding:18px;
+    }
+    .ticket .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+    }
+    .ticket .left{flex:1; min-width:0}
+    .ticket .right{width:240px; text-align:right}
+    .label{ font-weight:700; color:#25304a; margin-bottom:8px; display:block }
+    .value{ color:#1a2438; font-size:15px; margin-bottom:12px; line-height:1.4; min-height:18px }
+
+    .status-chip{
+      display:inline-block;
+      padding:8px 12px;
+      border-radius:12px;
+      color:#fff;
+      font-weight:800;
+      font-size:13px;
+      text-transform:none;
+      box-shadow:0 6px 18px rgba(10,20,40,0.05);
+    }
+    .pending { background:var(--blue); }
+    .reviewing { background:var(--purple); }
+    .clarification { background:var(--brown); }
+    .failed { background:var(--red); }
+    .succeeded { background:var(--green); }
+
+    .meta {
+      color:var(--muted);
+      font-size:13px;
+      margin-top:6px;
+    }
+
+    footer {
+      text-align:center;
+      margin:28px 0 80px 0;
+      color:#b6bec7;
+      font-size:13px;
+    }
+
+    /* responsive */
+    @media (max-width:820px){
+      .grid{ grid-template-columns:1fr; }
+      .ticket .right{ text-align:left; width:auto; margin-top:12px }
+    }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>BA Information Technology Services</h1>
-    <div class="sub">Support Ticket Status Portal</div>
+  <div class="page">
+    <!-- header image file name must match the file in your repo -->
+    <div class="header-wrap">
+      <img src="header.png" alt="BA Information Technology Services">
+    </div>
 
-    <!-- FAQ LINK HERE -->
-    <div class="faq-link">
+    <!-- FAQ link directly under header -->
+    <div class="faq-row">
       <a href="https://script.google.com/macros/s/AKfycbwCinvx9cDyEk5J8wckWNbaikP7lL_J08R-HTVC2QUUfD2nYf-BDWRjdQcddcXJor8LOA/exec"
-         target="_blank">
+         target="_blank" rel="noopener">
         Frequently Asked Questions (FAQs)
       </a>
     </div>
 
-    <label>Complete Name (as submitted in the form)</label>
-    <input id="clientName" type="text" placeholder="Enter full name">
+    <div class="card">
+      <h1>Follow-up Ticket Status</h1>
+      <div class="hint">Enter the <strong>Complete name</strong> you used in the form and your <strong>Ticket number</strong> (e.g. BA-0053).</div>
 
-    <label>Ticket Number</label>
-    <input id="ticketNumber" type="text" placeholder="Example: BA-0016">
+      <div class="grid">
+        <div>
+          <label>Complete name (from the form)</label>
+          <input id="clientName" type="text" placeholder="Type full name exactly as submitted">
 
-    <button onclick="lookupTicket()">Check Ticket Status</button>
+          <label style="margin-top:12px">Ticket number</label>
+          <input id="ticketNumber" type="text" placeholder="e.g. BA-0016">
+          
+          <div class="actions">
+            <button class="btn" id="checkBtn">Check Ticket</button>
+            <a class="btn secondary" href="https://forms.gle/QrGB6FrsphuRS8Bo9" target="_blank" rel="noopener">Submit a Concern</a>
+          </div>
 
-    <div id="errorMsg" class="error"></div>
-    <div id="ticketResult"></div>
+          <div id="msg" class="msg" style="display:none">Ticket loaded.</div>
+          <div id="err" class="error" style="display:none"></div>
+        </div>
+
+        <div>
+          <!-- right column placeholder (keeps layout) -->
+        </div>
+      </div>
+
+      <!-- ticket details container -->
+      <div id="ticketArea" class="ticket" style="display:none"></div>
+    </div>
+
+    <footer>BA Information Technology Services</footer>
   </div>
 
-  <script>
-    const TICKET_CSV =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?gid=60269729&single=true&output=csv";
+<script>
+/*
+  This script reads the published CSV of your Tickets sheet (public).
+  Make sure the published CSV link is the one you shared earlier.
+*/
+const TICKET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?gid=60269729&single=true&output=csv";
 
-    function normalize(str) {
-      return String(str || "").trim().toLowerCase();
+function normalize(v){ return String(v||'').trim().toLowerCase(); }
+
+function mapStatusClass(status){
+  const s = normalize(status);
+  if(s.includes('pending')) return 'pending';
+  if(s.includes('review')) return 'reviewing';
+  if(s.includes('clar')) return 'clarification';
+  if(s.includes('fail')) return 'failed';
+  if(s.includes('succeed') || s.includes('success')) return 'succeeded';
+  return 'pending';
+}
+
+// helper to parse CSV lines into array (simple)
+function parseCsv(text){
+  // split rows, then split columns (handles basic CSV - ok for published CSV)
+  const rows = text.split(/\r?\n/).filter(r=>r.trim().length>0);
+  return rows.map(r=>{
+    // basic CSV split by comma — published CSV should be straightforward
+    // also remove surrounding quotes
+    const cols = r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => {
+      c = c.replace(/^"(.*)"$/, '$1'); // strip quotes
+      return c;
+    });
+    return cols;
+  });
+}
+
+async function fetchTickets(){
+  const res = await fetch(TICKET_CSV_URL);
+  if(!res.ok) throw new Error('fetch_failed');
+  const txt = await res.text();
+  return parseCsv(txt);
+}
+
+function displayError(msg){
+  const e = document.getElementById('err');
+  e.style.display = 'block';
+  e.textContent = msg;
+  const m = document.getElementById('msg');
+  m.style.display = 'none';
+  document.getElementById('ticketArea').style.display='none';
+}
+
+function displaySuccess(){
+  const e = document.getElementById('err'); e.style.display='none';
+  const m = document.getElementById('msg'); m.style.display='block';
+}
+
+function renderTicket(found){
+  const box = document.getElementById('ticketArea');
+  box.style.display = 'block';
+  const statusClass = mapStatusClass(found.status);
+
+  // show dashes for empty values
+  const submitted = found.timestamp || '-';
+  const email = found.email || '-';
+  const location = found.location || '-';
+  const concern = found.concern || '-';
+  const assigned = found.assigned || '-';
+  const resolvedAt = found.resolved || '-';
+  const notes = found.internal || '-';
+  const lastUpdated = found.lastUpdated || '-';
+
+  box.innerHTML = `
+    <div class="row">
+      <div class="left">
+        <div><span class="label">Ticket</span><div class="value"><strong>${found.ticket}</strong></div></div>
+        <div><span class="label">Client</span><div class="value">${found.client}</div></div>
+        <div><span class="label">Submitted</span><div class="value">${submitted}</div></div>
+        <div><span class="label">Location</span><div class="value">${location}</div></div>
+        <div><span class="label">Concern</span><div class="value">${concern}</div></div>
+        <div><span class="label">Internal Notes</span><div class="value">${notes}</div></div>
+      </div>
+      <div class="right">
+        <div style="text-align:right;">
+          <div class="status-chip ${statusClass}">${found.status || '-'}</div>
+        </div>
+        <div style="height:12px"></div>
+        <div><span class="label">Assigned to</span><div class="value">${assigned}</div></div>
+        <div><span class="label">Resolved at</span><div class="value">${resolvedAt}</div></div>
+        <div><span class="label">Last Updated</span><div class="meta">${lastUpdated}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+// main lookup
+document.getElementById('checkBtn').addEventListener('click', async function(){
+  const nameInput = document.getElementById('clientName').value || '';
+  const ticketInput = document.getElementById('ticketNumber').value || '';
+  const name = normalize(nameInput);
+  const ticket = normalize(ticketInput);
+
+  if(!name || !ticket){
+    displayError('Please enter both the Complete name and Ticket number.');
+    return;
+  }
+
+  try{
+    const rows = await fetchTickets(); // rows[0] = header
+    if(rows.length < 2){
+      displayError('No ticket data found. Confirm the Tickets sheet is published and accessible.');
+      return;
     }
 
-    function statusClass(s) {
-      s = s.toLowerCase();
-      if (s.includes("pending")) return "pending";
-      if (s.includes("review")) return "reviewing";
-      if (s.includes("clar")) return "clarifying";
-      if (s.includes("fail")) return "failed";
-      if (s.includes("succeed") || s.includes("success")) return "succeeded";
-      return "";
-    }
+    // determine column indexes from header row (robust to column order)
+    const headers = rows[0].map(h=> (h||'').toLowerCase().trim());
+    // find likely header names:
+    // ticket -> "ticket"
+    // name -> "client name" or "client" or "client name"
+    // timestamp -> "timestamp"
+    // email -> "submitter email" or "submitter email"
+    // location -> "location" or "service location"
+    // priority -> "priority"
+    // concern -> "concern"
+    // status -> "status"
+    // assigned -> "assigned to"
+    // resolved -> "resolved at"
+    // internal notes -> "internal note" or "internal notes"
+    // last updated -> "last updated"
 
-    async function lookupTicket() {
-      document.getElementById("errorMsg").innerHTML = "";
-      document.getElementById("ticketResult").innerHTML = "";
-
-      const name = normalize(document.getElementById("clientName").value);
-      const ticket = normalize(document.getElementById("ticketNumber").value);
-
-      if (!name || !ticket) {
-        document.getElementById("errorMsg").innerHTML =
-          "Please enter both name and ticket number.";
-        return;
+    function findHeader(variants){
+      for(const v of variants){
+        const idx = headers.findIndex(h => h === v);
+        if(idx !== -1) return idx;
       }
+      return -1;
+    }
 
-      try {
-        const res = await fetch(TICKET_CSV);
-        const data = await res.text();
-        const rows = data.split("\n").map(r => r.split(","));
+    const idx_ticket = findHeader(['ticket','ticket number']);
+    const idx_timestamp = findHeader(['timestamp']);
+    const idx_email = findHeader(['submitter email','email','submitteremail']);
+    const idx_client = findHeader(['client name','client','clientname']);
+    const idx_location = findHeader(['location','service location']);
+    const idx_priority = findHeader(['priority']);
+    const idx_concern = findHeader(['concern']);
+    const idx_status = findHeader(['status','st...']);
+    const idx_assigned = findHeader(['assigned to','assignedto','assigned']);
+    const idx_resolved = findHeader(['resolved at','resolvedat']);
+    const idx_internal = findHeader(['internal note','internal notes','internalnote']);
+    const idx_lastupdated = findHeader(['last updated','lastupdated']);
 
-        let found = null;
-
-        for (let i = 1; i < rows.length; i++) {
-          const r = rows[i].map(x => x.trim());
-
-          const tTicket = normalize(r[0]);
-          const tEmail = r[2];
-          const tName = normalize(r[3]);
-          const tLoc  = r[4];
-          const tP    = r[5];
-          const tCon  = r[6];
-          const tStat = r[7];
-          const tAssign = r[8];
-          const tResolved = r[9];
-          const tNotes = r[10];
-          const tUpdated = r[13];
-
-          if (ticket === tTicket && name === tName) {
-            found = { tTicket, tEmail, tName, tLoc, tP, tCon, tStat, tAssign, tResolved, tNotes, tUpdated };
-            break;
-          }
-        }
-
-        if (!found) {
-          document.getElementById("errorMsg").innerHTML =
-            "Ticket not found — please make sure your name and ticket number match exactly.";
-          return;
-        }
-
-        const sClass = statusClass(found.tStat);
-
-        document.getElementById("ticketResult").innerHTML = `
-          <div class="ticket-box">
-            <div class="status-tag ${sClass}">${found.tStat || "-"}</div>
-            <div><span class="label">Ticket Number:</span> ${found.tTicket}</div>
-            <div><span class="label">Client Name:</span> ${found.tName || "-"}</div>
-            <div><span class="label">Location:</span> ${found.tLoc || "-"}</div>
-            <div><span class="label">Concern:</span> ${found.tCon || "-"}</div>
-            <div><span class="label">Assigned To:</span> ${found.tAssign || "-"}</div>
-            <div><span class="label">Resolved At:</span> ${found.tResolved || "-"}</div>
-            <div><span class="label">Internal Notes:</span> ${found.tNotes || "-"}</div>
-            <hr style="margin:12px 0;">
-            <div><span class="label">Last Updated:</span> ${found.tUpdated || "-"}</div>
-          </div>
-        `;
-      } catch (err) {
-        document.getElementById("errorMsg").innerHTML =
-          "Error loading ticket data.";
+    // search rows
+    let found = null;
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      const rTicket = normalize((r[idx_ticket]||'').toString());
+      const rName = normalize((r[idx_client]||'').toString());
+      if(rTicket === ticket && rName === name){
+        found = {
+          ticket: r[idx_ticket] || '-',
+          timestamp: r[idx_timestamp] || '-',
+          email: r[idx_email] || '-',
+          client: r[idx_client] || '-',
+          location: r[idx_location] || '-',
+          priority: r[idx_priority] || '-',
+          concern: r[idx_concern] || '-',
+          status: r[idx_status] || '-',
+          assigned: r[idx_assigned] || '-',
+          resolved: r[idx_resolved] || '-',
+          internal: r[idx_internal] || '-',
+          lastUpdated: r[idx_lastupdated] || '-'
+        };
+        break;
       }
     }
-  </script>
+
+    if(!found){
+      displayError('No matching ticket found. Make sure the name matches exactly the one in the form and the ticket number is correct.');
+      return;
+    }
+
+    displaySuccess();
+    renderTicket(found);
+
+  } catch(err){
+    console.error(err);
+    displayError('The Tickets sheet could not be fetched. Ensure the Tickets sheet is published as CSV and the URL is correct.');
+  }
+});
+</script>
 </body>
 </html>

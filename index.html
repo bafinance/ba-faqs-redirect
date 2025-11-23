@@ -2,286 +2,298 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>Follow-up Ticket Status — BA IT</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Follow-up Ticket Status – BA IT</title>
-  <meta name="description" content="Check your BA support ticket by ticket number and name.">
   <style>
-    :root{--blue:#0a6bff;--muted:#6c7680;--bg:#f5f7fb;--card:#ffffff}
-    body{margin:0;background:var(--bg);font-family:Inter,Arial,Helvetica,sans-serif;color:#111}
-    .wrap{max-width:920px;margin:18px auto;padding:18px}
-    .header-img{width:100%;border-radius:12px;margin-bottom:18px;object-fit:cover}
-    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 30px rgba(10,20,40,.06)}
+    :root{
+      --blue:#0a6bff;
+      --muted:#6c7680;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:#111;
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{max-width:920px;margin:28px auto;padding:18px}
+    header{display:block;text-align:center;margin-bottom:14px}
+    header img{width:100%;max-height:140px;object-fit:cover;border-radius:6px;box-shadow:0 6px 18px rgba(10,10,20,.06)}
+    .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 8px 30px rgba(10,20,40,.06)}
     h1{margin:0 0 8px 0;font-size:22px}
+    p.hint{margin:6px 0 18px;color:var(--muted);font-size:14px}
+    .row{display:flex;gap:12px;align-items:stretch}
+    .col{flex:1;min-width:0}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    .grid{display:grid;grid-template-columns:1fr 260px;gap:12px;margin-bottom:12px}
-    input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eaf0;font-size:15px}
-    .btn{background:var(--blue);color:#fff;border:0;padding:10px 14px;border-radius:9px;font-weight:700;cursor:pointer}
-    .link{font-size:14px;color:var(--blue);margin-left:10px;text-decoration:none;font-weight:600}
-    .error{margin-top:14px;color:#c62828;font-size:14px;font-weight:600}
-    .ticket-box{margin-top:18px;padding:16px;border-radius:10px;background:#fff;border:1px solid #e8e8e8}
-    .row{margin-bottom:8px;font-size:15px}
-    .label{font-weight:700;color:#333}
-    .status-pill{display:inline-block;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:700;color:#fff}
-    .pending{background:#6c7680}.reviewing{background:#0a6bff}.clarifying{background:#ca8a04}.failed{background:#d32f2f}.succeeded{background:#2e7d32}
-    .muted{color:#6c7680;font-size:13px;margin-top:6px}
-    .small{font-size:13px;color:#6c7680}
-    footer{margin-top:28px;text-align:center;color:#9aa0a6;font-size:13px}
-    code.debug{display:block;white-space:pre-wrap;background:#fff;padding:10px;border-radius:6px;margin-top:12px;border:1px solid #eee}
+    input[type="text"]{width:100%;padding:12px 14px;border-radius:8px;border:1px solid #e6eaef;font-size:15px;box-sizing:border-box}
+    .controls{margin-top:14px;display:flex;gap:12px;align-items:center}
+    .btn{background:var(--blue);color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
+    .link{color:var(--blue);text-decoration:none;margin-left:6px}
+    .status{margin-top:12px;color:#b93b3b;font-weight:600}
+    .small{font-size:13px;color:var(--muted);margin-top:10px}
+    /* result */
+    .result{margin-top:18px;border-radius:10px;padding:14px;border:1px dashed #e6eaef;background:#fbfdff}
+    .result dt{font-weight:700;color:#233}
+    .result dd{margin:0 0 8px 0;color:#333}
+    .badge{float:right;padding:6px 10px;border-radius:8px;background:#f1f6ff;color:#0a3ea8;font-weight:700}
+    /* responsive */
+    @media (max-width:640px){
+      .row{flex-direction:column}
+      header img{max-height:120px}
+    }
+    .footer{margin-top:40px;text-align:center;color:var(--muted);font-size:13px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- header.png must exist in repo root -->
-    <img src="header.png" alt="BA Information Technology Services" class="header-img">
+    <header>
+      <!-- header.png must exist in repo root -->
+      <img src="header.png" alt="BA Information Technology Services" />
+    </header>
 
-    <div class="card" role="main" aria-labelledby="title">
-      <h1 id="title">Follow-up Ticket Status</h1>
-      <p class="small">Enter the <strong>Complete name</strong> you used in the form and your <strong>Ticket number</strong> (e.g. <em>BA-0053</em>).</p>
+    <div class="card" role="main" aria-labelledby="pageTitle">
+      <div style="display:flex;align-items:center">
+        <h1 id="pageTitle">Follow-up Ticket Status</h1>
+      </div>
+      <p class="hint">Enter the <strong>Complete name</strong> you used in the form and your <strong>Ticket number</strong> (e.g. BA-0053).</p>
 
-      <div class="grid">
-        <div>
-          <label for="name">Complete name (from the form)</label>
-          <input id="name" type="text" placeholder="Your complete name">
+      <div class="row">
+        <div class="col">
+          <label for="clientName">Complete name (from the form)</label>
+          <input id="clientName" type="text" placeholder="e.g. Juan Dela Cruz" />
         </div>
-        <div>
-          <label for="ticket">Ticket number</label>
-          <input id="ticket" type="text" placeholder="BA-0001">
+        <div class="col" style="flex:0 0 260px">
+          <label for="ticketNumber">Ticket number</label>
+          <input id="ticketNumber" type="text" placeholder="e.g. BA-0053" />
         </div>
       </div>
 
-      <button class="btn" id="checkBtn">Check Ticket</button>
-      <a class="link" href="https://forms.gle/QrGB6FrsphuRS8Bo9" target="_blank" rel="noopener">Submit a Concern</a>
+      <div class="controls">
+        <button id="checkBtn" class="btn">Check Ticket</button>
+        <a id="submitFormLink" class="link" href="https://forms.gle/QrGB6FrsphuRS8Bo9" target="_blank" rel="noopener">Submit a Concern</a>
+        <div style="flex:1"></div>
+      </div>
 
-      <div id="error" class="error" role="alert" aria-live="polite"></div>
-      <div id="result" aria-live="polite"></div>
-      <div id="debug" class="muted" style="display:none"></div>
+      <div id="message" class="status" aria-live="polite"></div>
+
+      <div id="ticketArea"></div>
+
+      <p class="small">
+        <strong>Note:</strong> If the page shows "Server returned HTML", open your Google Sheet and choose <em>File → Publish to the web</em> (Publish entire document). Sharing the sheet as "Anyone with the link — Viewer" is not always sufficient for the public JSON endpoint used here.
+      </p>
     </div>
 
-    <footer>BA Information Technology Services</footer>
+    <div class="footer">BA Information Technology Services</div>
   </div>
 
-  <script>
-    // -- CONFIG: spreadsheet id and sheet name (Tickets)
-    const SPREADSHEET_ID = "13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ";
-    const SHEET_NAME = "Tickets";
+<script>
+(() => {
+  // CONFIG - do NOT change name of this var; if you do, change here and in code below.
+  const SHEET_ID = '13fetKChhGys7GOBHwGsOMU5TDJqgiFfmPUIQUeYmfoQ';
+  const SHEET_NAME = 'Tickets'; // sheet tab name exact
 
-    // gviz JSON endpoint (first attempt)
-    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-    // CSV fallback (second attempt)
-    const CSV_FALLBACK = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  // Mapping: these are 0-based indexes of columns IN THE Tickets sheet
+  // Based on your sheet: A=Ticket, B=Timestamp, C=Submitter Email, D=Client Name, E=Location, F=Priority, G=Concern, H=Status, I=Assigned To, J=Resolved At, K=Internal Notes, ... N=Last Updated (maybe)
+  const COL = {
+    ticket: 0,
+    timestamp: 1,
+    submitterEmail: 2,
+    clientName: 3,
+    location: 4,
+    priority: 5,
+    concern: 6,
+    status: 7,
+    assignedTo: 8,
+    resolvedAt: 9,
+    // internalNotes: 10, // intentionally omitted from client view
+    // formRow / responseLink / lastUpdated may be after
+  };
 
-    const errorEl = document.getElementById('error');
-    const resultEl = document.getElementById('result');
-    const debugEl = document.getElementById('debug');
-    const btn = document.getElementById('checkBtn');
+  // UI elements
+  const clientNameEl = document.getElementById('clientName');
+  const ticketNumberEl = document.getElementById('ticketNumber');
+  const checkBtn = document.getElementById('checkBtn');
+  const messageEl = document.getElementById('message');
+  const ticketArea = document.getElementById('ticketArea');
 
-    btn.addEventListener('click', checkTicket);
+  checkBtn.addEventListener('click', onCheck);
+  ticketNumberEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onCheck(); });
+  clientNameEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onCheck(); });
 
-    function normalizeName(s){
-      return String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
+  function setMessage(html, danger=false){
+    messageEl.innerHTML = html || '';
+    messageEl.style.color = danger ? '#b93b3b' : '#2b7a2b';
+  }
+
+  function clearResult(){
+    ticketArea.innerHTML = '';
+  }
+
+  function showResultHtml(html){
+    ticketArea.innerHTML = html;
+  }
+
+  function normalize(s){
+    if(!s && s!==0) return '';
+    return String(s).trim().toLowerCase();
+  }
+
+  async function onCheck(){
+    clearResult();
+    setMessage('');
+    const name = clientNameEl.value || '';
+    const ticket = ticketNumberEl.value || '';
+    if(!name || !ticket){
+      setMessage('Enter both name and ticket number.', true);
+      return;
     }
-    function normalizeTicketRaw(s){
-      return String(s||'').replace(/\D/g,'');
-    }
 
-    // pick columns based on either headers or fixed layout (your current sheet order)
-    function pickColumnsFromParsed(parsed){
-      const cols = (parsed.table && parsed.table.cols) ? parsed.table.cols : [];
-      const labels = cols.map(c => (String(c && c.label || '').toLowerCase().trim()));
-      const defaults = {
-        ticket: 0, clientName: 3, status: 7,
-        concern: 6, assigned: 8, location: 4,
-        resolvedAt: 9, responseLink: 12, lastUpdated: 13
-      };
-      function findIndexByKeywords(words){
-        for (let i=0;i<labels.length;i++){
-          for (let w of words){
-            if (!labels[i]) continue;
-            if (labels[i].includes(w)) return i;
+    setMessage('Fetching ticket — please wait...');
+    checkBtn.disabled = true;
+
+    try {
+      const rows = await fetchSheetRows();
+      setMessage(''); // clear
+
+      // find match by ticket first (ticket numbers unique)
+      const ticketNorm = normalize(ticket);
+      let found = null;
+      for(const r of rows){
+        const cellTicket = normalize(r[COL.ticket]);
+        if(cellTicket === ticketNorm){
+          // ticket matched; now check name
+          const sheetName = normalize(r[COL.clientName] || r[COL.clientName === undefined ? 3 : COL.clientName]);
+          if(sheetName === normalize(name)){
+            found = r;
+            break;
+          } else {
+            // ticket matched but name mismatch -> show helpful error
+            setMessage('Ticket number found but the name you entered does not match the name on the ticket. Use the exact name from the form (no case sensitivity).', true);
+            return;
           }
         }
-        return -1;
       }
-      return {
-        ticket: findIndexByKeywords(['ticket']) !== -1 ? findIndexByKeywords(['ticket']) : defaults.ticket,
-        name: findIndexByKeywords(['client name','full name','name','submitter']) !== -1 ? findIndexByKeywords(['client name','full name','name','submitter']) : defaults.clientName,
-        status: findIndexByKeywords(['status','state']) !== -1 ? findIndexByKeywords(['status','state']) : defaults.status,
-        concern: findIndexByKeywords(['concern','issue','description']) !== -1 ? findIndexByKeywords(['concern','issue','description']) : defaults.concern,
-        assigned: findIndexByKeywords(['assign','assigned','assignee']) !== -1 ? findIndexByKeywords(['assign','assigned','assignee']) : defaults.assigned,
-        location: findIndexByKeywords(['location','address']) !== -1 ? findIndexByKeywords(['location','address']) : defaults.location,
-        resolvedAt: findIndexByKeywords(['resolved','resolved at','date resolved']) !== -1 ? findIndexByKeywords(['resolved','resolved at','date resolved']) : defaults.resolvedAt,
-        responseLink: findIndexByKeywords(['response','response link','follow-up','follow up']) !== -1 ? findIndexByKeywords(['response','response link','follow-up','follow up']) : defaults.responseLink,
-        lastUpdated: findIndexByKeywords(['last updated','last update','updated']) !== -1 ? findIndexByKeywords(['last updated','last update','updated']) : defaults.lastUpdated
-      };
-    }
 
-    // small CSV parser that handles quoted fields (basic)
-    function parseCSV(str){
-      const rows = [];
-      let cur = '', inQuotes = false, row = [];
-      for (let i=0;i<str.length;i++){
-        const ch = str[i];
-        const nxt = str[i+1];
-        if (ch === '"' ){
-          if (inQuotes && nxt === '"'){ cur += '"'; i++; continue; }
-          inQuotes = !inQuotes;
-          continue;
-        }
-        if (!inQuotes && ch === ','){ row.push(cur); cur = ''; continue; }
-        if (!inQuotes && (ch === '\n' || ch === '\r')){
-          if (ch === '\r' && str[i+1] === '\n'){ continue; } // let \n handle
-          // end of row
-          row.push(cur);
-          rows.push(row);
-          row = [];
-          cur = '';
-          continue;
-        }
-        cur += ch;
-      }
-      // push last cell/row
-      if (cur !== '' || row.length > 0){
-        row.push(cur);
-        rows.push(row);
-      }
-      return rows;
-    }
-
-    // try fetch gviz JSON, fall back to CSV
-    async function fetchSheet(){
-      try {
-        const res = await fetch(GVIZ_URL, {cache: "no-store"});
-        const text = await res.text();
-        // if server returned HTML (login/interstitial) -> fallback
-        if (/<!doctype html|google drive|page not found|sign in/i.test(text.substring(0,1000))){
-          // fallback to CSV
-          const csvRes = await fetch(CSV_FALLBACK, {cache: "no-store"});
-          const csvText = await csvRes.text();
-          // if csvRes also returned html, throw to caller
-          if (/<!doctype html|google drive|page not found|sign in/i.test(csvText.substring(0,1000))){
-            throw new Error('Server returned HTML (not JSON or CSV). Confirm the Tickets sheet is publicly viewable (Anyone with the link — Viewer).');
-          }
-          // parse CSV into an object similar to gviz
-          const rows = parseCSV(csvText);
-          // first row are headers
-          const headers = rows[0] || [];
-          const table = { cols: headers.map(h => ({label: h})), rows: rows.slice(1).map(r => ({c: r.map(cell => ({v: cell}))})) };
-          return { table };
-        } else {
-          // extract JSON object inside wrapper (gviz returns something like: /*O_o*/\ngoogle.visualization.Query.setResponse({...});
-          const firstBrace = text.indexOf('{');
-          const lastBrace = text.lastIndexOf('}');
-          if (firstBrace === -1 || lastBrace === -1) throw new Error('Unexpected GVIZ response format (no JSON braces)');
-          const jsonStr = text.substring(firstBrace, lastBrace+1);
-          return JSON.parse(jsonStr);
-        }
-      } catch (err){
-        throw err;
-      }
-    }
-
-    function escapeHtml(s){
-      return String(s||'').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-    }
-
-    async function checkTicket(){
-      errorEl.textContent = '';
-      resultEl.innerHTML = '';
-      debugEl.style.display = 'none';
-      debugEl.textContent = '';
-
-      const nameInRaw = document.getElementById('name').value;
-      const ticketInRaw = document.getElementById('ticket').value.trim();
-
-      const nameIn = normalizeName(nameInRaw);
-      const ticketNumeric = normalizeTicketRaw(ticketInRaw);
-
-      if (!nameIn || !ticketNumeric){
-        errorEl.textContent = 'Please enter both name and ticket number (e.g. BA-0016).';
+      if(!found){
+        setMessage('No matching ticket found. Make sure the Ticket and Complete name match exactly the values submitted in the form.', true);
         return;
       }
 
-      btn.disabled = true;
-      btn.textContent = 'Checking…';
+      // Build result display
+      const resultHtml = buildResultHtml(found);
+      showResultHtml(resultHtml);
 
-      try {
-        const parsed = await fetchSheet();
-        const rl = (parsed.table && parsed.table.rows) ? parsed.table.rows : [];
-        const plainRows = rl.map(r => (r.c||[]).map(c => (c && (typeof c.v !== 'undefined') ? c.v : '')));
-
-        const cols = pickColumnsFromParsed(parsed);
-
-        // search
-        let found = null;
-        for (let r of plainRows){
-          const sheetTicketRaw = String(r[cols.ticket] || '');
-          const sheetTicketNumeric = normalizeTicketRaw(sheetTicketRaw);
-          const sheetNameRaw = String(r[cols.name] || '');
-          const sheetName = normalizeName(sheetNameRaw);
-          if (sheetTicketNumeric && sheetTicketNumeric === ticketNumeric && sheetName === nameIn){
-            found = r;
-            break;
-          }
-        }
-
-        if (!found){
-          // try to detect ticket exists with different name
-          let ticketExists = false;
-          for (let r of plainRows){
-            const st = normalizeTicketRaw(String(r[cols.ticket] || ''));
-            if (st === ticketNumeric){ ticketExists = true; break; }
-          }
-          if (ticketExists){
-            errorEl.textContent = 'Ticket found but name does not match. Use the exact full name you entered in the form (spacing is flexible, case ignored).';
-          } else {
-            errorEl.textContent = 'No matching ticket found. Double-check the ticket number and name in your confirmation email.';
-          }
-          btn.disabled = false;
-          btn.textContent = 'Check Ticket';
-          return;
-        }
-
-        // display fields
-        const getField = (row, idx) => idx >= 0 ? (row[idx] || '') : '';
-        const ticketDisplay = getField(found, cols.ticket);
-        const clientName = getField(found, cols.name);
-        const location = getField(found, cols.location);
-        const concern = getField(found, cols.concern);
-        const status = getField(found, cols.status) || 'Pending';
-        const assigned = getField(found, cols.assigned) || '—';
-        const resolvedAt = getField(found, cols.resolvedAt) || '—';
-        const lastUpdated = getField(found, cols.lastUpdated) || '—';
-        const responseLink = getField(found, cols.responseLink) || '';
-
-        let badgeClass = 'pending';
-        const s = String(status || '').toLowerCase();
-        if (s.includes('review')) badgeClass='reviewing';
-        else if (s.includes('clar') || s.includes('clarify')) badgeClass='clarifying';
-        else if (s.includes('fail')) badgeClass='failed';
-        else if (s.includes('succ')) badgeClass='succeeded';
-
-        resultEl.innerHTML = `
-          <div class="ticket-box" role="region" aria-label="Ticket details">
-            <div class="row"><span class="label">Ticket:</span> ${escapeHtml(ticketDisplay)}</div>
-            <div class="row"><span class="label">Name:</span> ${escapeHtml(clientName)}</div>
-            <div class="row"><span class="label">Location:</span> ${escapeHtml(location)}</div>
-            <div class="row"><span class="label">Concern:</span> ${escapeHtml(concern)}</div>
-            <div class="row"><span class="label">Assigned To:</span> ${escapeHtml(assigned)}</div>
-            <div class="row"><span class="label">Status:</span> <span class="status-pill ${badgeClass}">${escapeHtml(status)}</span></div>
-            <div class="row"><span class="label">Resolved At:</span> ${escapeHtml(resolvedAt)}</div>
-            <div class="row"><span class="label">Last Updated:</span> ${escapeHtml(lastUpdated)}</div>
-            ${ responseLink ? `<div class="row"><a href="${escapeHtml(responseLink)}" target="_blank" rel="noopener">Follow-up Ticket Status link</a></div>` : '' }
-          </div>
-        `;
-      } catch (err){
-        errorEl.textContent = 'The spreadsheet could not be fetched. Ensure the Tickets sheet is shared as "Anyone with the link — Viewer".';
-        debugEl.style.display = 'block';
-        debugEl.textContent = (err && err.message) ? err.message : String(err);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Check Ticket';
+    } catch (err) {
+      console.error('Fetch error', err);
+      const msg = err && err.message ? err.message : String(err);
+      // If server returned HTML (login page / drive page) we give clear instruction
+      if(msg.indexOf('server-returned-html') !== -1){
+        setMessage('The Tickets sheet could not be fetched. Make sure you published the sheet to the web (File → Publish to the web) and the sheet tab name is exactly "Tickets".', true);
+      } else {
+        setMessage('Error fetching tickets: ' + msg, true);
       }
+    } finally {
+      checkBtn.disabled = false;
     }
-  </script>
+  }
+
+  function buildResultHtml(row){
+    // helper to pick column values safely
+    const val = (idx)=> (idx>=0 && idx < row.length ? (row[idx] == null ? '' : row[idx]) : '');
+    const fields = {
+      ticket: val(COL.ticket),
+      timestamp: val(COL.timestamp),
+      submitterEmail: val(COL.submitterEmail),
+      clientName: val(COL.clientName),
+      location: val(COL.location),
+      priority: val(COL.priority),
+      concern: val(COL.concern),
+      status: val(COL.status),
+      assignedTo: val(COL.assignedTo),
+      resolvedAt: val(COL.resolvedAt)
+    };
+
+    // create result markup
+    return `
+      <div class="result">
+        <div style="overflow:auto">
+          <div style="float:left">
+            <dl>
+              <dt>Ticket</dt><dd>${escapeHtml(fields.ticket || '')}</dd>
+              <dt>Client</dt><dd>${escapeHtml(fields.clientName || '')}</dd>
+            </dl>
+          </div>
+          <div style="float:right;text-align:right">
+            <div class="badge">${escapeHtml(fields.status||'')}</div>
+            <div style="clear:both"></div>
+          </div>
+        </div>
+        <div style="clear:both"></div>
+        <hr style="margin:10px 0;border:none;border-top:1px solid #eef2f5" />
+        <dl style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
+          <div><dt>Submitted</dt><dd>${escapeHtml(fields.timestamp||'')}</dd></div>
+          <div><dt>Assigned to</dt><dd>${escapeHtml(fields.assignedTo||'')}</dd></div>
+          <div><dt>Email</dt><dd>${escapeHtml(fields.submitterEmail||'')}</dd></div>
+          <div><dt>Resolved at</dt><dd>${escapeHtml(fields.resolvedAt||'')}</dd></div>
+          <div style="grid-column:1 / -1"><dt>Location</dt><dd>${escapeHtml(fields.location||'')}</dd></div>
+          <div style="grid-column:1 / -1"><dt>Priority</dt><dd>${escapeHtml(fields.priority||'')}</dd></div>
+          <div style="grid-column:1 / -1"><dt>Concern</dt><dd>${escapeHtml(fields.concern||'')}</dd></div>
+        </dl>
+      </div>
+    `;
+  }
+
+  // Simple HTML escape
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[c]);
+  }
+
+  // Fetch sheet rows using gviz JSON endpoint and return a simple array-of-arrays
+  async function fetchSheetRows(){
+    // Use Google visualization API json endpoint for public sheets
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=out:json`;
+    const res = await fetch(url, { credentials: 'omit', cache: 'no-store' });
+    if(!res.ok){
+      throw new Error('Network response was not ok (' + res.status + ')');
+    }
+    const text = await res.text();
+
+    // If server returned HTML (login page / drive UI), quick detect:
+    const ttrim = text.trim();
+    if(ttrim.startsWith('<')){
+      // HTML returned instead of JSON -> probably not published to web
+      const err = new Error('server-returned-html');
+      err.detail = 'Server returned HTML (not JSON). Confirm sheet is published to web.';
+      throw err;
+    }
+
+    // Google wraps JSON in various prefixes. The common wrappers:
+    // 1) /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+    // 2) /**/ google.visualization.Query.setResponse(...)
+    // We'll extract the {...} object:
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if(start === -1 || end === -1){
+      throw new Error('Unexpected server response (no JSON found).');
+    }
+    const jsonText = text.slice(start, end+1);
+    let obj;
+    try {
+      obj = JSON.parse(jsonText);
+    } catch (e) {
+      console.error('JSON parse failed', e, jsonText.slice(0,200));
+      throw new Error('Unexpected server response (invalid JSON).');
+    }
+
+    // Now parse the visualization response table -> convert to array of simple values
+    if(!obj.table || !obj.table.rows) return [];
+    const rows = obj.table.rows.map(r => (r.c || []).map(cell => (cell && typeof cell.v !== 'undefined') ? cell.v : ''));
+    return rows;
+  }
+
+})();
+</script>
 </body>
 </html>

@@ -1,519 +1,234 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Follow-up Ticket Status — BA IT</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Check your BA support ticket by ticket number and name." />
+  <meta charset="UTF-8" />
+  <title>BA Support Ticket Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    :root{
-      --bg:#f4f6f8;
-      --card:#ffffff;
-      --muted:#8b97a4;
-      --blue:#0a6bff;
-      --accent:#0a6bff;
-      --success:#138000;
-      --danger:#b71c1c;
-      --shadow:0 8px 30px rgba(18,24,32,0.06);
-      --radius:12px;
-      --maxw:920px;
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 0;
     }
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:Inter, Arial, Helvetica, sans-serif;
-      background:var(--bg);
-      color:#111;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      padding:28px 18px;
-      display:flex;
-      justify-content:center;
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: white;
+      padding: 25px 30px;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     }
-    .wrap{max-width:var(--maxw);width:100%}
-    header.header{
-      background:transparent;
-      padding:8px 0 18px 0;
-      text-align:center;
+    h1 {
+      text-align: center;
+      color: #0a2f66;
+      margin-bottom: 8px;
+      font-size: 26px;
     }
-    header.header img{max-width:100%;height:auto;border-radius:6px}
-    .card{
-      background:var(--card);
-      border-radius:var(--radius);
-      padding:20px;
-      box-shadow:var(--shadow);
-      margin-top:18px;
+    .sub {
+      text-align: center;
+      color: #444;
+      font-size: 14px;
+      margin-bottom: 14px;
     }
-    h1{margin:0 0 8px 0;font-size:22px}
-    p.hint{margin:0 0 18px 0;color:var(--muted);font-size:14px}
-    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
-    @media (max-width:880px){ .grid{grid-template-columns:1fr} }
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type="text"]{
-      width:100%;
-      padding:12px 14px;
-      border-radius:8px;
-      border:1px solid #e6eaef;
-      box-sizing:border-box;
-      font-size:15px;
-      outline:none;
-      transition:box-shadow .12s, border-color .12s;
+
+    /* ---- FAQ LINK ---- */
+    .faq-link {
+      text-align: center;
+      margin-top: -5px;
+      margin-bottom: 25px;
     }
-    input[type="text"]:focus{box-shadow:0 6px 18px rgba(10,107,255,0.08);border-color:var(--accent)}
-    .controls{margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .btn{
-      display:inline-block;padding:10px 16px;border-radius:10px;border:0;cursor:pointer;font-weight:700;
-      text-decoration:none;color:#fff;background:var(--blue);
-      box-shadow:0 6px 18px rgba(10,107,255,0.12)
+    .faq-link a {
+      color: #0a6bff;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 14px;
     }
-    .link{color:var(--blue);text-decoration:underline;cursor:pointer;background:none;border:0;padding:0;font-weight:600}
-    .status-msg{margin-top:10px;font-weight:700;color:var(--success)}
-    .note{margin-top:12px;color:var(--muted);font-size:13px}
-    /* ticket panel */
-    .ticket-panel{background:#fff;border-radius:10px;padding:18px;border:1px solid #f0f2f4;margin-top:14px}
-    .ticket-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
-    .ticket-left{flex:1}
-    .ticket-right{width:220px;text-align:right}
-    .ticket-title{font-size:16px;font-weight:800;margin:0 0 6px 0}
-    .muted{color:var(--muted);font-size:13px}
-    .field{margin-top:12px}
-    .field strong{display:block;color:#222;margin-bottom:6px}
-    .value{font-size:15px;color:#111}
-    .badge{
-      display:inline-block;padding:8px 12px;border-radius:12px;background:#eef6ff;color:var(--blue);font-weight:700;font-size:13px;
-      box-shadow:0 4px 12px rgba(10,107,255,0.06)
+    .faq-link a:hover {
+      text-decoration: underline;
     }
-    .meta{font-size:12px;color:var(--muted);margin-top:8px}
-    /* internal notes */
-    .notes{background:#fafbfd;border-radius:8px;padding:12px;margin-top:12px;border:1px solid #eef2f6}
-    .small{font-size:13px;color:var(--muted)}
-    .error{color:var(--danger);font-weight:700}
-    footer{margin-top:30px;text-align:center;color:var(--muted);font-size:13px}
-    /* show more link */
-    .showmore{background:none;border:0;color:var(--blue);font-weight:700;cursor:pointer;padding:0;margin-left:6px}
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 14px;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      background: #0a6bff;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #084ec7;
+    }
+    .error {
+      margin-top: 14px;
+      color: #d93025;
+      font-weight: 700;
+      text-align: center;
+    }
+    .ticket-box {
+      margin-top: 25px;
+      background: #f4f6fc;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #d9e2ef;
+    }
+    .ticket-box div {
+      margin: 6px 0;
+    }
+    .label {
+      font-weight: 700;
+      color: #0a2f66;
+    }
+
+    /* STATUS COLOR TAG */
+    .status-tag {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      float: right;
+    }
+
+    .pending { background:#f59e0b; }
+    .reviewing { background:#0a6bff; }
+    .clarifying { background:#f59e0b; }
+    .failed { background:#d93025; }
+    .succeeded { background:#16a34a; }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <header class="header">
-      <!-- header.png should be in your repo root (you uploaded it as header.png) -->
-      <img src="header.png" alt="BA Information Technology Services header">
-    </header>
+  <div class="container">
+    <h1>BA Information Technology Services</h1>
+    <div class="sub">Support Ticket Status Portal</div>
 
-    <div class="card" role="main" aria-labelledby="title">
-      <h1 id="title">Follow-up Ticket Status</h1>
-      <p class="hint">Enter the <strong>Complete name</strong> you used in the form and your <strong>Ticket number</strong> (e.g. BA-0053).</p>
-
-      <div class="grid">
-        <div>
-          <label for="clientName">Complete name (from the form)</label>
-          <input id="clientName" type="text" placeholder="Jane Dela Cruz">
-
-        </div>
-        <div>
-          <label for="ticketNumber">Ticket number</label>
-          <input id="ticketNumber" type="text" placeholder="BA-0053">
-        </div>
-      </div>
-
-      <div class="controls">
-        <button class="btn" id="checkBtn">Check Ticket</button>
-        <a class="link" id="submitLink" href="https://forms.gle/QrGB6FrsphuRS8Bo9" target="_blank" rel="noopener">Submit a Concern</a>
-      </div>
-
-      <div id="statusMessage" class="status-msg" aria-live="polite" style="display:none"></div>
-      <div id="errorMessage" class="note" style="display:none"></div>
-
-      <!-- ticket result -->
-      <div id="ticketResult" class="ticket-panel" style="display:none">
-        <div class="ticket-row">
-          <div class="ticket-left">
-            <div class="ticket-title" id="ticketId">Ticket</div>
-            <div class="muted" id="clientLabel">Client</div>
-            <div class="field">
-              <strong>Submitted</strong>
-              <div class="value" id="submittedAt"></div>
-            </div>
-
-            <div class="field">
-              <strong>Location</strong>
-              <div class="value" id="location"></div>
-            </div>
-
-            <div class="field">
-              <strong>Concern</strong>
-              <div class="value" id="concern"></div>
-            </div>
-
-            <div id="internalNotesWrap" class="field" style="display:none">
-              <strong>Internal Notes</strong>
-              <div class="notes small" id="internalNotes"></div>
-            </div>
-          </div>
-
-          <div class="ticket-right">
-            <div style="text-align:right">
-              <div id="statusBadge" class="badge" aria-hidden="true">Status</div>
-            </div>
-
-            <div class="meta" style="margin-top:10px">
-              <div><strong>Assigned to</strong></div>
-              <div id="assignedTo" class="value" style="margin-bottom:10px"></div>
-
-              <div><strong>Resolved at</strong></div>
-              <div id="resolvedAt" class="value" style="margin-bottom:10px"></div>
-
-              <div><strong>Last Updated</strong></div>
-              <div id="lastUpdated" class="value"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <!-- FAQ LINK HERE -->
+    <div class="faq-link">
+      <a href="https://script.google.com/macros/s/AKfycbwCinvx9cDyEk5J8wckWNbaikP7lL_J08R-HTVC2QUUfD2nYf-BDWRjdQcddcXJor8LOA/exec"
+         target="_blank">
+        Frequently Asked Questions (FAQs)
+      </a>
     </div>
 
-    <footer>BA Information Technology Services</footer>
+    <label>Complete Name (as submitted in the form)</label>
+    <input id="clientName" type="text" placeholder="Enter full name">
+
+    <label>Ticket Number</label>
+    <input id="ticketNumber" type="text" placeholder="Example: BA-0016">
+
+    <button onclick="lookupTicket()">Check Ticket Status</button>
+
+    <div id="errorMsg" class="error"></div>
+    <div id="ticketResult"></div>
   </div>
 
-<script>
-/*
-  Follow-up Ticket Status script
-  - Option B: Internal notes trimmed to 200 characters with "Show more"
-  - 5 attempt lockout for failed attempts (3 hours)
-  - Reads Tickets from published CSV (TICKETS_CSV_URL)
-  - Auto-detects headers so it adapts to current sheet column order
-*/
+  <script>
+    const TICKET_CSV =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?gid=60269729&single=true&output=csv";
 
-(function(){
-  'use strict';
-
-  // -------------------------
-  // CONFIG - replace only if the published CSV URL changes
-  // (This was derived from the "publish to web" link you provided earlier)
-  // -------------------------
-  const TICKETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfRBiFS4R36jzmtv0eMcVEkpqxpgNoI_dJ0DQRUO-lJ_Un_dYNqmYbl0agA4l7V9565ECHuvKKzMM1/pub?output=csv&gid=60269729';
-  const MAX_NOTE_LENGTH = 200;   // Option B: trim internal notes
-  const MAX_ATTEMPTS = 5;
-  const LOCKOUT_HOURS = 3; // hours
-
-  // element refs
-  const clientNameEl = document.getElementById('clientName');
-  const ticketNumberEl = document.getElementById('ticketNumber');
-  const checkBtn = document.getElementById('checkBtn');
-  const statusMessage = document.getElementById('statusMessage');
-  const errorMessage = document.getElementById('errorMessage');
-  const ticketResult = document.getElementById('ticketResult');
-  const ticketIdEl = document.getElementById('ticketId');
-  const clientLabelEl = document.getElementById('clientLabel');
-  const submittedAtEl = document.getElementById('submittedAt');
-  const locationEl = document.getElementById('location');
-  const concernEl = document.getElementById('concern');
-  const assignedToEl = document.getElementById('assignedTo');
-  const resolvedAtEl = document.getElementById('resolvedAt');
-  const lastUpdatedEl = document.getElementById('lastUpdated');
-  const statusBadgeEl = document.getElementById('statusBadge');
-  const internalNotesWrap = document.getElementById('internalNotesWrap');
-  const internalNotesEl = document.getElementById('internalNotes');
-
-  // localStorage keys
-  const ATTEMPTS_KEY = 'ba_followup_attempts';
-
-  // CSV parsing helper (handles quoted fields)
-  function parseCSV(text) {
-    const rows = [];
-    let cur = '', row = [], i = 0, inQuotes = false;
-    while (i < text.length) {
-      const ch = text[i];
-      if (ch === '"') {
-        if (inQuotes && text[i+1] === '"') {
-          cur += '"'; i += 2; continue; // escaped quote
-        }
-        inQuotes = !inQuotes;
-        i++; continue;
-      }
-      if (!inQuotes && (ch === '\r' || ch === '\n')) {
-        if (ch === '\r' && text[i+1] === '\n') { i++; } // windows
-        row.push(cur); rows.push(row); row = []; cur = ''; i++; continue;
-      }
-      if (!inQuotes && ch === ',') {
-        row.push(cur); cur = ''; i++; continue;
-      }
-      cur += ch; i++;
-    }
-    // push last
-    row.push(cur);
-    if (row.length > 1 || row[0] !== '') rows.push(row);
-    return rows;
-  }
-
-  // Normalize strings for comparison
-  function normalize(s) {
-    return String(s || '').trim().toLowerCase().replace(/\s+/g,' ');
-  }
-
-  // Attempts handling
-  function getAttempts() {
-    try {
-      const raw = localStorage.getItem(ATTEMPTS_KEY);
-      if (!raw) return {count:0, blockedUntil:0};
-      return JSON.parse(raw);
-    } catch(e) { return {count:0, blockedUntil:0}; }
-  }
-  function setAttempts(attemptsObj) {
-    localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attemptsObj));
-  }
-  function recordFailure() {
-    const a = getAttempts();
-    a.count = (a.count || 0) + 1;
-    if (a.count >= MAX_ATTEMPTS) {
-      // block
-      const blockedUntil = Date.now() + LOCKOUT_HOURS * 60 * 60 * 1000;
-      a.blockedUntil = blockedUntil;
-    }
-    setAttempts(a);
-  }
-  function resetAttempts() {
-    setAttempts({count:0, blockedUntil:0});
-  }
-
-  // UI helpers
-  function showError(msg) {
-    errorMessage.style.display = 'block';
-    errorMessage.className = 'note error';
-    errorMessage.textContent = msg;
-  }
-  function clearError() {
-    errorMessage.style.display = 'none';
-    errorMessage.textContent = '';
-  }
-  function showStatus(msg) {
-    statusMessage.style.display = 'block';
-    statusMessage.textContent = msg;
-  }
-  function clearStatus() {
-    statusMessage.style.display = 'none';
-    statusMessage.textContent = '';
-  }
-
-  // Render ticket object
-  function renderTicket(ticket, headerMap) {
-    ticketResult.style.display = 'block';
-    clearError();
-    showStatus('Ticket loaded.');
-
-    // Display basics
-    ticketIdEl.textContent = ticket[ headerMap.Ticket ] || ticket[ headerMap['ticket'] ] || 'Ticket';
-    clientLabelEl.textContent = ticket[ headerMap['Client Name'] ] || ticket[ headerMap['client name'] ] || ticket[ headerMap['client'] ] || '';
-    submittedAtEl.textContent = ticket[ headerMap['Timestamp'] ] || ticket[ headerMap['timestamp'] ] || '';
-    locationEl.textContent = ticket[ headerMap['Location'] ] || ticket[ headerMap['location'] ] || '';
-    concernEl.textContent = ticket[ headerMap['Concern'] ] || ticket[ headerMap['concern'] ] || '';
-    assignedToEl.textContent = ticket[ headerMap['Assigned To'] ] || ticket[ headerMap['assigned to'] ] || '';
-    resolvedAtEl.textContent = ticket[ headerMap['Resolved At'] ] || ticket[ headerMap['resolved at'] ] || '';
-    lastUpdatedEl.textContent = ticket[ headerMap['Last Updated'] ] || ticket[ headerMap['last updated'] ] || '';
-
-    // status
-    const status = ticket[ headerMap['Status'] ] || ticket[ headerMap['status'] ] || '';
-    statusBadgeEl.textContent = status || 'Status';
-    // color badge lightly by status text
-    if (/pending/i.test(status)) {
-      statusBadgeEl.style.background = '#fff7ed'; statusBadgeEl.style.color = '#a35a00';
-    } else if (/review/i.test(status)) {
-      statusBadgeEl.style.background = '#eef6ff'; statusBadgeEl.style.color = 'var(--blue)';
-    } else if (/clarif|clarification/i.test(status)) {
-      statusBadgeEl.style.background = '#fff7f7'; statusBadgeEl.style.color = '#b71c1c';
-    } else if (/succeed|success/i.test(status)) {
-      statusBadgeEl.style.background = '#f1faf3'; statusBadgeEl.style.color = '#138000';
-    } else {
-      statusBadgeEl.style.background = '#f3f5f7'; statusBadgeEl.style.color = '#566070';
+    function normalize(str) {
+      return String(str || "").trim().toLowerCase();
     }
 
-    // Internal Notes (col K or header name "Internal Note" etc.)
-    const internal = ticket[ headerMap['Internal Note'] ] || ticket[ headerMap['Internal Notes'] ] || ticket[ headerMap['internal note'] ] || ticket[ headerMap['internal notes'] ] || '';
-    if (internal && String(internal).trim() !== '') {
-      internalNotesWrap.style.display = 'block';
-      const txt = String(internal);
-      if (txt.length > MAX_NOTE_LENGTH) {
-        const short = txt.slice(0, MAX_NOTE_LENGTH);
-        internalNotesEl.innerHTML = escapeHtml(short) + '...';
-        // add show more toggle
-        const btn = document.createElement('button');
-        btn.className = 'showmore';
-        btn.textContent = 'Show more';
-        btn.onclick = function(){
-          if (btn.textContent === 'Show more') {
-            internalNotesEl.textContent = txt;
-            btn.textContent = 'Show less';
-          } else {
-            internalNotesEl.innerHTML = escapeHtml(short) + '...';
-            btn.textContent = 'Show more';
-          }
-        };
-        // clear old toggles
-        const existing = internalNotesEl.parentNode.querySelector('.showmore');
-        if (existing) existing.remove();
-        internalNotesEl.parentNode.appendChild(btn);
-      } else {
-        internalNotesEl.textContent = txt;
-      }
-    } else {
-      internalNotesWrap.style.display = 'none';
-      internalNotesEl.textContent = '';
-    }
-  }
-
-  // HTML-escape helper
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
-  }
-
-  // main fetch & lookup
-  async function fetchAndFindTicket(clientName, ticketNumber) {
-    clearStatus(); clearError(); ticketResult.style.display = 'none';
-
-    // lockout check
-    const attempts = getAttempts();
-    if (attempts.blockedUntil && Date.now() < attempts.blockedUntil) {
-      const mins = Math.ceil((attempts.blockedUntil - Date.now()) / (60*1000));
-      showError('Too many failed attempts. Please try again after ' + mins + ' minutes.');
-      return;
+    function statusClass(s) {
+      s = s.toLowerCase();
+      if (s.includes("pending")) return "pending";
+      if (s.includes("review")) return "reviewing";
+      if (s.includes("clar")) return "clarifying";
+      if (s.includes("fail")) return "failed";
+      if (s.includes("succeed") || s.includes("success")) return "succeeded";
+      return "";
     }
 
-    showStatus('Loading ticket data...');
+    async function lookupTicket() {
+      document.getElementById("errorMsg").innerHTML = "";
+      document.getElementById("ticketResult").innerHTML = "";
 
-    try {
-      const res = await fetch(TICKETS_CSV_URL, {cache:'no-store'});
-      const txt = await res.text();
+      const name = normalize(document.getElementById("clientName").value);
+      const ticket = normalize(document.getElementById("ticketNumber").value);
 
-      // quick sanity check: ensure server returned CSV (not an HTML error page)
-      if (/<!doctype html|<html/i.test(txt.slice(0,500))) {
-        showError('The Tickets sheet could not be fetched. Ensure the sheet is published as CSV and the URL is correct.');
+      if (!name || !ticket) {
+        document.getElementById("errorMsg").innerHTML =
+          "Please enter both name and ticket number.";
         return;
       }
 
-      // parse csv
-      const rows = parseCSV(txt);
-      if (!rows || rows.length < 2) {
-        showError('No ticket data found in the Tickets file.');
-        return;
-      }
+      try {
+        const res = await fetch(TICKET_CSV);
+        const data = await res.text();
+        const rows = data.split("\n").map(r => r.split(","));
 
-      // header mapping -> case-insensitive
-      const headerRow = rows[0].map(h => String(h||'').trim());
-      const headerMap = {}; // maps friendly names to index
-      headerRow.forEach((h, idx) => {
-        headerMap[h || ('col' + idx)] = idx;
-        headerMap[h.toLowerCase()] = idx;
-      });
+        let found = null;
 
-      // helper to get by header name key (try common variants)
-      function findIndexByNames(names) {
-        for (const n of names) {
-          if (headerMap.hasOwnProperty(n)) return headerMap[n];
-          if (headerMap.hasOwnProperty(n.toLowerCase())) return headerMap[n.toLowerCase()];
-        }
-        return -1;
-      }
-      // Build a friendly headerMap object mapping common names -> column index
-      const mapped = {};
-      mapped['Ticket'] = findIndexByNames(['Ticket','ticket']);
-      mapped['Timestamp'] = findIndexByNames(['Timestamp','timestamp','Submitted','submitted']);
-      mapped['Submitter Email'] = findIndexByNames(['Submitter Email','Email','email','submitter email']);
-      mapped['Client Name'] = findIndexByNames(['Client Name','Client','client name','client']);
-      mapped['Location'] = findIndexByNames(['Location','location','address']);
-      mapped['Priority'] = findIndexByNames(['Priority','priority']);
-      mapped['Concern'] = findIndexByNames(['Concern','concern','message','description']);
-      mapped['Status'] = findIndexByNames(['Status','status']);
-      mapped['Assigned To'] = findIndexByNames(['Assigned To','assigned to','assigned']);
-      mapped['Resolved At'] = findIndexByNames(['Resolved At','resolved at','resolved']);
-      mapped['Internal Note'] = findIndexByNames(['Internal Note','Internal Notes','internal note','internal notes','Internal Note(s)']);
-      mapped['Last Updated'] = findIndexByNames(['Last Updated','last updated','Last updated','LastUpdated']);
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i].map(x => x.trim());
 
-      // find ticket row by ticket number
-      const wantedTicket = String(ticketNumber || '').trim();
-      if (!wantedTicket) { showError('Enter a ticket number.'); return; }
+          const tTicket = normalize(r[0]);
+          const tEmail = r[2];
+          const tName = normalize(r[3]);
+          const tLoc  = r[4];
+          const tP    = r[5];
+          const tCon  = r[6];
+          const tStat = r[7];
+          const tAssign = r[8];
+          const tResolved = r[9];
+          const tNotes = r[10];
+          const tUpdated = r[13];
 
-      // iterate rows
-      let foundRow = null;
-      for (let r = 1; r < rows.length; r++) {
-        const row = rows[r];
-        const tval = (mapped['Ticket'] >= 0) ? String(row[mapped['Ticket']] || '') : (row[0] || '');
-        if (normalize(tval) === normalize(wantedTicket)) {
-          // if client name also provided, match that too
-          const clientVal = (mapped['Client Name'] >= 0) ? String(row[mapped['Client Name']] || '') : (row[3] || '');
-          if (normalize(clientVal) === normalize(clientName)) {
-            foundRow = row;
+          if (ticket === tTicket && name === tName) {
+            found = { tTicket, tEmail, tName, tLoc, tP, tCon, tStat, tAssign, tResolved, tNotes, tUpdated };
             break;
-          } else {
-            // name mismatch -> not allowed (counts as failure)
-            recordFailure();
-            const attempts2 = getAttempts();
-            if (attempts2.blockedUntil && Date.now() < attempts2.blockedUntil) {
-              showError('Too many failed attempts. Please try again later.');
-            } else {
-              showError('No matching ticket found. Make sure the name matches exactly the one you entered in the form.');
-            }
-            return;
           }
         }
-      }
 
-      if (!foundRow) {
-        // no ticket found
-        recordFailure();
-        const attempts2 = getAttempts();
-        if (attempts2.blockedUntil && Date.now() < attempts2.blockedUntil) {
-          showError('Too many failed attempts. Please try again later.');
-        } else {
-          showError('No matching ticket found. Check your ticket number and name.');
+        if (!found) {
+          document.getElementById("errorMsg").innerHTML =
+            "Ticket not found — please make sure your name and ticket number match exactly.";
+          return;
         }
-        return;
+
+        const sClass = statusClass(found.tStat);
+
+        document.getElementById("ticketResult").innerHTML = `
+          <div class="ticket-box">
+            <div class="status-tag ${sClass}">${found.tStat || "-"}</div>
+            <div><span class="label">Ticket Number:</span> ${found.tTicket}</div>
+            <div><span class="label">Client Name:</span> ${found.tName || "-"}</div>
+            <div><span class="label">Location:</span> ${found.tLoc || "-"}</div>
+            <div><span class="label">Concern:</span> ${found.tCon || "-"}</div>
+            <div><span class="label">Assigned To:</span> ${found.tAssign || "-"}</div>
+            <div><span class="label">Resolved At:</span> ${found.tResolved || "-"}</div>
+            <div><span class="label">Internal Notes:</span> ${found.tNotes || "-"}</div>
+            <hr style="margin:12px 0;">
+            <div><span class="label">Last Updated:</span> ${found.tUpdated || "-"}</div>
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById("errorMsg").innerHTML =
+          "Error loading ticket data.";
       }
-
-      // success -> reset attempts
-      resetAttempts();
-
-      // render
-      renderTicket(foundRow, mapped);
-
-    } catch (err) {
-      console.error('fetch error', err);
-      showError('Error fetching tickets: ' + (err && err.message ? err.message : 'Network error'));
-    } finally {
-      clearStatus();
     }
-  }
-
-  // wire up
-  checkBtn.addEventListener('click', function(){
-    clearError(); clearStatus();
-    ticketResult.style.display = 'none';
-    const name = clientNameEl.value || '';
-    const ticket = ticketNumberEl.value || '';
-    // simple validation
-    if (!ticket.trim()) { showError('Please enter a ticket number.'); return; }
-    if (!name.trim()) { showError('Please enter the complete name used in the form.'); return; }
-
-    // check lockout
-    const att = getAttempts();
-    if (att.blockedUntil && Date.now() < att.blockedUntil) {
-      const mins = Math.ceil((att.blockedUntil - Date.now()) / (60*1000));
-      showError('Too many failed attempts. Please try again after ' + mins + ' minutes.');
-      return;
-    }
-
-    fetchAndFindTicket(name, ticket);
-  });
-
-  // allow Enter key
-  [clientNameEl, ticketNumberEl].forEach(el=>{
-    el.addEventListener('keydown', function(e){
-      if (e.key === 'Enter') {
-        checkBtn.click();
-      }
-    });
-  });
-
-})();
-</script>
+  </script>
 </body>
 </html>

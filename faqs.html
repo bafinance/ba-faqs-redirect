@@ -1,1 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>FAQs — BA Information Technology Services</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 
+<style>
+  :root{
+    --accent:#0a6bff;
+    --bg:#f4f6fb;
+    --text:#1f2937;
+    --border:#e5e7eb;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Inter, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+
+  /* HEADER */
+  .header{
+    width:100%;
+    background:#111;
+    text-align:center;
+    padding:0;
+  }
+  .header img{
+    width:100%;
+    max-width:900px;
+    display:block;
+    margin:0 auto;
+  }
+
+  .page{
+    max-width:1200px;
+    margin:20px auto;
+    padding:0 16px;
+    display:flex;
+    gap:20px;
+  }
+
+  /* LEFT PANEL */
+  .left{
+    width:340px;
+    min-width:260px;
+    background:#fff;
+    padding:18px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    height:max-content;
+  }
+
+  h2{ margin:0 0 14px; font-size:22px; font-weight:800; color:#0b1220; }
+
+  .searchBox{
+    border:1px solid var(--border);
+    padding:10px 14px;
+    border-radius:10px;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#f9fafb;
+  }
+  .searchBox input{
+    border:0;
+    outline:none;
+    background:transparent;
+    width:100%;
+    font-size:14px;
+  }
+
+  .faqList{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .faqItem{
+    background:#fff;
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    cursor:pointer;
+    font-size:14px;
+    font-weight:600;
+  }
+  .faqItem:hover{
+    background:#f1f5ff;
+  }
+
+  /* RIGHT CONTENT */
+  .content{
+    flex:1;
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    min-height:280px;
+  }
+  .question{
+    font-size:24px;
+    font-weight:800;
+    margin-bottom:12px;
+  }
+  .answer{
+    font-size:15px;
+    white-space:pre-wrap;
+    line-height:1.6;
+  }
+
+  @media(max-width:900px){
+    .page{ flex-direction:column; }
+    .left{ width:100%; }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <img src="header.png" alt="BA Information Technology Services" />
+</div>
+
+<div class="page">
+
+  <!-- LEFT SIDE -->
+  <div class="left">
+    <h2>Frequently Asked Questions</h2>
+
+    <div class="searchBox">
+      <input id="searchInput" placeholder="Search FAQs...">
+    </div>
+
+    <div id="faqList" class="faqList"></div>
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="content">
+    <div id="question" class="question"></div>
+    <div id="answer" class="answer"></div>
+  </div>
+
+</div>
+
+<script>
+/* 📌 This CSV publishes *ONLY the FAQs sheet* */
+const FAQ_CSV_URL = 
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vQOB7XYnfn0V6i8HkQQc7nXDv7nDL-s0TN_tJdpBU-tQgOQh-4sTv6vOc5_CZf6ldK5RsjcAZfiMTiD/pub?gid=0&single=true&output=csv";
+
+function parseCsv(text){
+  const rows = text.split(/\r?\n/).filter(x=>x.trim());
+  return rows.map(r => r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'')));
+}
+
+async function loadFAQs(){
+  const res = await fetch(FAQ_CSV_URL);
+  const txt = await res.text();
+  const rows = parseCsv(txt);
+  const header = rows[0].map(h=>h.toLowerCase());
+
+  const idxQ = header.indexOf("question");
+  const idxA = header.indexOf("answer");
+
+  const faqs = rows.slice(1).map(r => ({
+    q: r[idxQ] || "",
+    a: r[idxA] || ""
+  })).filter(f => f.q.trim() !== "");
+
+  populateList(faqs);
+}
+
+function populateList(faqs){
+  const list = document.getElementById("faqList");
+  list.innerHTML = "";
+
+  faqs.forEach((f,i)=>{
+    const div = document.createElement("div");
+    div.className = "faqItem";
+    div.textContent = f.q;
+    div.addEventListener("click", ()=> showFAQ(f));
+    list.appendChild(div);
+  });
+
+  if(faqs.length){ showFAQ(faqs[0]); }
+}
+
+function showFAQ(f){
+  document.getElementById("question").textContent = f.q;
+  document.getElementById("answer").textContent = f.a;
+}
+
+document.getElementById("searchInput").addEventListener("input", async (e)=>{
+  const term = e.target.value.toLowerCase();
+
+  const res = await fetch(FAQ_CSV_URL);
+  const txt = await res.text();
+  const rows = parseCsv(txt);
+  const header = rows[0].map(h=>h.toLowerCase());
+
+  const idxQ = header.indexOf("question");
+  const idxA = header.indexOf("answer");
+
+  const results = rows.slice(1)
+    .map(r => ({ q:r[idxQ]||"", a:r[idxA]||"" }))
+    .filter(f => f.q.toLowerCase().includes(term) || f.a.toLowerCase().includes(term));
+
+  populateList(results);
+});
+
+loadFAQs();
+</script>
+
+</body>
+</html>

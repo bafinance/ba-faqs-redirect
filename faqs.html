@@ -29,7 +29,7 @@
     .smallBtn{padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer}
     .sectionTitle{font-weight:800;margin:12px 0 8px 0}
     .faqList{display:flex;flex-direction:column;gap:8px}
-    .faqItem{padding:10px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer;word-break:break-word}
+    .faqItem{padding:10px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer;line-height:1.3}
     .faqItem:hover{background:#fbfcff}
     .faqItem.active{background:#f0f6ff;border-color:#e2efff}
     .right{flex:1;display:flex;flex-direction:column;gap:14px}
@@ -84,6 +84,7 @@
 
       <div class="right">
         <div class="heroBox card" id="heroBox">
+          <!-- two landing images when no FAQ selected -->
           <div id="landingImages" style="display:flex;gap:12px;align-items:center;justify-content:center;width:100%">
             <img src="services1.png" alt="Service image 1" style="max-height:220px;object-fit:contain;border-radius:6px">
             <img src="services2.png" alt="Service image 2" style="max-height:220px;object-fit:contain;border-radius:6px">
@@ -117,149 +118,91 @@
   </div>
 
 <script>
-/* ------------- CONFIG ------------- */
-/* Put your published CSV URL for the FAQs sheet here (CSV output) */
+/* CONFIG: published CSV URL for your FAQs sheet (replace if different) */
 const FAQ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOB7XYnfn0V6i8HkQQc7nXDv7nDL-s0TN_tJdpBU-tQgOQh-4sTv6vOc5_CZf6ldK5RsjcAZfiMTiD/pub?gid=0&single=true&output=csv";
-/* ----------- END CONFIG ----------- */
 
-/* Robust CSV parser that handles quoted fields and newlines inside quotes.
-   Returns array of rows; each row is array of columns.
-*/
+/* Robust CSV parser (handles quoted fields, newlines inside quotes). */
 function parseCSV(text){
   const rows = [];
   let cur = [];
   let field = '';
   let inQuotes = false;
-  let i=0;
-  while(i < text.length){
+  for(let i=0;i<text.length;i++){
     const ch = text[i];
     const nxt = text[i+1];
     if(inQuotes){
-      if(ch === '"' && nxt === '"'){ // escaped quote
-        field += '"';
-        i += 2;
-        continue;
-      } else if(ch === '"'){ // end quotes
-        inQuotes = false;
-        i++;
-        continue;
-      } else {
-        field += ch;
-        i++;
-        continue;
-      }
-    } else {
-      if(ch === '"'){
-        inQuotes = true;
-        i++;
-        continue;
-      }
-      if(ch === ','){
-        cur.push(field);
-        field = '';
-        i++;
-        continue;
-      }
-      if(ch === '\r'){
-        i++;
-        continue;
-      }
-      if(ch === '\n'){
-        cur.push(field);
-        rows.push(cur);
-        cur = [];
-        field = '';
-        i++;
-        continue;
-      }
+      if(ch === '"' && nxt === '"'){ field += '"'; i++; continue; }
+      if(ch === '"'){ inQuotes = false; continue; }
       field += ch;
-      i++;
+    } else {
+      if(ch === '"'){ inQuotes = true; continue; }
+      if(ch === ','){ cur.push(field); field=''; continue; }
+      if(ch === '\r') continue;
+      if(ch === '\n'){ cur.push(field); rows.push(cur); cur=[]; field=''; continue; }
+      field += ch;
     }
   }
-  if(!inQuotes){
-    if(field !== '' || cur.length>0){
-      cur.push(field);
-      rows.push(cur);
-    }
-  } else {
-    // malformed CSV (unclosed quote) - still push what we have
-    cur.push(field);
-    rows.push(cur);
-  }
+  if(field !== '' || cur.length>0){ cur.push(field); rows.push(cur); }
   return rows;
 }
 
-/* safe header index finder: trims & lowercases header names */
-function findHeaderIndex(headers, candidates){
-  const cleaned = headers.map(h => (h||'').toString().trim().toLowerCase());
-  for(const cand of candidates){
-    const idx = cleaned.indexOf(cand.toLowerCase());
+/* header finder (case-insensitive) */
+function findHeaderIndex(headers, names){
+  const lower = headers.map(h => (h||'').toString().trim().toLowerCase());
+  for(const name of names){
+    const idx = lower.indexOf(name.toLowerCase());
     if(idx !== -1) return idx;
   }
   return -1;
 }
 
-let allFAQs = [];
+/* UI state */
+let allFAQs = []; // {id, question, answer, tags[], order, visible}
 let topFAQs = [];
 
 async function fetchAndLoad(){
   try{
     const r = await fetch(FAQ_CSV_URL, {cache: "no-cache"});
-    if(!r.ok) throw new Error('fetch_failed');
+    if(!r.ok) throw new Error('fetch_failed:' + r.status);
     const txt = await r.text();
     const rows = parseCSV(txt);
     if(!rows || rows.length < 2) throw new Error('no_rows');
-
-    const headerRow = rows[0].map(h => (h||'').toString().trim());
-    // debug - if you open devtools you'll see the detected headers
-    console.info('Detected headers:', headerRow);
-
-    // find exact indexes
-    const idxQuestion = findHeaderIndex(headerRow, ['question','q','questions']);
-    const idxAnswer = findHeaderIndex(headerRow, ['answer','a']);
-    const idxTags = findHeaderIndex(headerRow, ['tags','tag']);
-    const idxOrder = findHeaderIndex(headerRow, ['order']);
-    const idxVisible = findHeaderIndex(headerRow, ['visible']);
-
-    if(idxQuestion === -1){
-      console.error('Could not detect Question column index. Headers:', headerRow);
-      alert('Error: Could not detect "Question" column in the FAQs sheet header. Open devtools console for details.');
-      return;
-    }
+    const headers = rows[0].map(h => (h||'').toString().trim());
+    // Try to get indexes - default to column positions you specified if headers missing
+    const idxQuestion = findHeaderIndex(headers, ['question','q']) !== -1 ? findHeaderIndex(headers, ['question','q']) : 1; // column B index=1
+    const idxAnswer = findHeaderIndex(headers, ['answer','a']) !== -1 ? findHeaderIndex(headers, ['answer','a']) : 2; // column C index=2
+    const idxTags = findHeaderIndex(headers, ['tags','tag']) !== -1 ? findHeaderIndex(headers, ['tags','tag']) : 3; // column D index=3
+    const idxOrder = findHeaderIndex(headers, ['order']) !== -1 ? findHeaderIndex(headers, ['order']) : 5; // column F index=5
+    const idxVisible = findHeaderIndex(headers, ['visible']) !== -1 ? findHeaderIndex(headers, ['visible']) : 6; // column G index=6
 
     allFAQs = [];
-    for(let r=1; r<rows.length; r++){
-      const row = rows[r];
-      // use the *full* text from the question column only, do NOT split it
-      const questionCell = (row[idxQuestion] || '').toString();
-      const answerCell = (idxAnswer !== -1) ? (row[idxAnswer] || '').toString() : '';
-      const tagsCell = (idxTags !== -1) ? (row[idxTags] || '').toString() : '';
-      const orderVal = (idxOrder !== -1) ? Number((row[idxOrder] || '').toString().trim()) || 0 : 0;
-      const visibleRaw = (idxVisible !== -1) ? (row[idxVisible] || '').toString().trim().toLowerCase() : '';
-      const visible = visibleRaw === '' ? true : (visibleRaw !== 'false' && visibleRaw !== '0');
-
-      // IMPORTANT: only add if questionCell is non-empty (preserves full question text)
-      if(!questionCell || !questionCell.trim()) continue;
-
-      const tags = tagsCell ? tagsCell.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean) : [];
-
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      const question = (r[idxQuestion] || '').toString().trim();
+      const answer = (r[idxAnswer] || '').toString().trim();
+      const tagsRaw = (r[idxTags] || '').toString().trim();
+      const orderVal = Number((r[idxOrder] || '').toString().trim()) || 0;
+      const visibleRaw = (r[idxVisible] || '').toString().trim().toLowerCase();
+      const visible = (visibleRaw === '') ? true : (visibleRaw !== 'false' && visibleRaw !== '0');
+      if(!question) continue;
+      const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean) : [];
       allFAQs.push({
-        id: 'faq_' + r,
-        question: questionCell.trim(),
-        answer: answerCell.trim(),
+        id: 'f' + i,
+        question,
+        answer,
         tags,
         order: orderVal,
         visible
       });
     }
 
-    // top 5 by order (higher first)
-    topFAQs = allFAQs.filter(f=>f.visible).slice().sort((a,b)=> (b.order||0) - (a.order||0)).slice(0,5);
+    // Top 5 by order
+    topFAQs = allFAQs.filter(f => f.visible).slice().sort((a,b) => (b.order || 0) - (a.order || 0)).slice(0,5);
 
     renderLists();
-  } catch(err){
-    console.error('Failed to fetch/load FAQs', err);
-    alert('Failed to load FAQs. Confirm the published CSV URL and that the sheet is public.');
+  } catch(e){
+    console.error(e);
+    alert('Failed to load FAQs: ' + (e.message || e));
   }
 }
 
@@ -268,54 +211,51 @@ function renderLists(){
   const allEl = document.getElementById('allFaqs');
   topEl.innerHTML = '';
   allEl.innerHTML = '';
-
   topFAQs.forEach(f=>{
-    const d = document.createElement('div');
-    d.className = 'faqItem';
-    d.innerText = f.question;
+    const d = document.createElement('div'); d.className='faqItem'; d.innerText = f.question;
     d.addEventListener('click', ()=> openFAQ(f.id));
     topEl.appendChild(d);
   });
-
-  // All FAQs: use question text only (complete)
   allFAQs.forEach(f=>{
-    const d = document.createElement('div');
-    d.className = 'faqItem';
-    d.innerText = f.question; // <-- IMPORTANT: full question only, no splitting
+    const d = document.createElement('div'); d.className='faqItem'; d.innerText = f.question;
     d.addEventListener('click', ()=> openFAQ(f.id));
     allEl.appendChild(d);
   });
-
-  // show hero images if nothing selected
   showLandingImages();
 }
 
 function showLandingImages(){
+  document.getElementById('heroBox').style.display = 'flex';
   document.getElementById('landingImages').style.display = 'flex';
   document.getElementById('answerCard').style.display = 'none';
 }
 
+/* open FAQ */
 function openFAQ(id){
   const f = allFAQs.find(x => x.id === id);
   if(!f) return;
-  // highlight the matching element(s)
+  // highlight items
   document.querySelectorAll('.faqItem').forEach(el => el.classList.remove('active'));
-  Array.from(document.querySelectorAll('.faqItem')).forEach(el=>{
+  Array.from(document.querySelectorAll('.faqItem')).forEach(el => {
     if(el.innerText && el.innerText.trim() === f.question.trim()) el.classList.add('active');
   });
-
+  // hide landing images
   document.getElementById('landingImages').style.display = 'none';
+  // show answer
   document.getElementById('answerCard').style.display = 'block';
-
+  document.getElementById('heroBox').style.display = 'block';
   document.getElementById('qaTitle').innerText = f.question;
   document.getElementById('qaBody').innerText = f.answer || '-';
-
-  setTimeout(()=> { document.getElementById('answerCard').scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+  // optionally set a status color if tag contains a status name
+  const statusChip = document.getElementById('statusChip');
+  statusChip.style.display = 'none';
+  // smooth scroll
+  setTimeout(()=> { document.getElementById('answerCard').scrollIntoView({behavior:'smooth', block:'start'}); }, 40);
 }
 
-/* Search */
+/* search handler */
 let searchTimer;
-function onSearch(e){
+function onSearch(){
   clearTimeout(searchTimer);
   searchTimer = setTimeout(()=>{
     const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
@@ -330,35 +270,32 @@ function onSearch(e){
     const topEl = document.getElementById('topFaqs'); topEl.innerHTML = '';
     const allEl = document.getElementById('allFaqs'); allEl.innerHTML = '';
     matches.slice(0,5).forEach(f=>{
-      const d = document.createElement('div'); d.className='faqItem'; d.innerText = f.question; d.addEventListener('click',()=>openFAQ(f.id)); topEl.appendChild(d);
+      const d=document.createElement('div'); d.className='faqItem'; d.innerText=f.question; d.addEventListener('click',()=>openFAQ(f.id)); topEl.appendChild(d);
     });
     matches.forEach(f=>{
-      const d = document.createElement('div'); d.className='faqItem'; d.innerText = f.question; d.addEventListener('click',()=>openFAQ(f.id)); allEl.appendChild(d);
+      const d=document.createElement('div'); d.className='faqItem'; d.innerText=f.question; d.addEventListener('click',()=>openFAQ(f.id)); allEl.appendChild(d);
     });
     document.getElementById('allFaqs').style.display = 'block';
     document.getElementById('toggleAll').innerText = '▾';
   }, 220);
 }
 
-document.getElementById('refreshBtn').addEventListener('click', ()=>{ fetchAndLoad().then(()=> showToast('Refreshed')); });
+/* UI listeners */
+document.getElementById('refreshBtn').addEventListener('click', ()=> { fetchAndLoad(); showToast('Refreshed'); });
 document.getElementById('searchInput').addEventListener('input', onSearch);
 document.getElementById('toggleAll').addEventListener('click', ()=>{
   const a = document.getElementById('allFaqs'); const t = document.getElementById('toggleAll');
-  if(a.style.display === 'none' || a.style.display === ''){ a.style.display = 'block'; t.innerText = '▾'; } else { a.style.display = 'none'; t.innerText = '▸'; }
+  if(a.style.display === 'none' || a.style.display === ''){ a.style.display='block'; t.innerText='▾'; } else { a.style.display='none'; t.innerText='▸'; }
 });
-document.getElementById('viewAllBtn').addEventListener('click', (ev)=>{
-  ev.preventDefault();
-  const a = document.getElementById('allFaqs'); a.style.display = 'block'; document.getElementById('toggleAll').innerText = '▾'; a.scrollIntoView({behavior:'smooth', block:'start'});
-});
+document.getElementById('viewAllBtn').addEventListener('click',(ev)=>{ ev.preventDefault(); document.getElementById('allFaqs').style.display='block'; document.getElementById('toggleAll').innerText='▾'; document.getElementById('allFaqs').scrollIntoView({behavior:'smooth'}); });
 
 function showToast(msg){
-  const t = document.createElement('div');
-  t.style.position='fixed'; t.style.bottom='24px'; t.style.left='50%'; t.style.transform='translateX(-50%)';
-  t.style.padding='10px 14px'; t.style.background='#111'; t.style.color='#fff'; t.style.borderRadius='8px'; t.style.zIndex=9999;
-  t.innerText = msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1500);
+  const t = document.createElement('div'); t.style.position='fixed'; t.style.bottom='24px'; t.style.left='50%'; t.style.transform='translateX(-50%)';
+  t.style.padding='10px 14px'; t.style.background='#111'; t.style.color='#fff'; t.style.borderRadius='8px'; t.style.zIndex=9999; t.innerText=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1400);
 }
 
-/* start */
+/* init */
 fetchAndLoad();
 </script>
 </body>

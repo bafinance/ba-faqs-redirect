@@ -1,181 +1,389 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Frequently Asked Questions — BA Information Technology Services</title>
+  <meta charset="utf-8" />
+  <title>FAQs — BA Information Technology Services</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
+    :root{
+      --accent:#0f62fe;
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6c7680;
+      --border:#e6e9ee;
+      --maxw:1150px;
+    }
+    *{box-sizing:border-box}
     body{
       margin:0;
-      font-family:Inter, Arial, sans-serif;
-      background:#f4f6fb;
-      color:#111;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-    .banner{
-      width:100%;
-      background:#000;
-      text-align:center;
-      padding:0;
-    }
-    .banner img{
-      width:100%;
-      max-width:1200px;
-      height:auto;
-      display:block;
-      margin:0 auto;
-    }
-    .page{
-      max-width:1000px;
-      margin:20px auto;
-      padding:0 16px;
-      display:flex;
-      gap:20px;
-    }
+
+    .wrap{max-width:var(--maxw);margin:18px auto;padding:12px;}
+    .banner{display:flex;align-items:center;justify-content:center;border-radius:10px;overflow:hidden;background:#111;padding:8px;margin-bottom:14px;box-shadow:0 8px 30px rgba(6,16,48,0.06)}
+    .banner img{width:100%;height:auto;max-height:260px;object-fit:contain;display:block}
+
+    .layout{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start;}
+    @media(max-width:920px){ .layout{grid-template-columns:1fr} }
+
     .left{
-      width:35%;
+      background:var(--card);
+      border-radius:12px;
+      padding:14px;
+      box-shadow:0 8px 26px rgba(10,20,40,0.04);
+      border:1px solid var(--border);
+      height:100%;
     }
     .right{
-      flex:1;
-      background:#fff;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 6px 24px rgba(0,0,0,0.08);
-      min-height:400px;
-    }
-    .searchBox{
-      background:#eee;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid #ddd;
-      margin-bottom:16px;
-    }
-    .searchBox input{
-      width:100%;
-      border:none;
       background:transparent;
-      outline:none;
-      font-size:15px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
     }
-    .faqItem{
-      padding:10px 12px;
-      background:#fff;
-      border:1px solid #ddd;
-      border-radius:10px;
-      margin-bottom:10px;
-      cursor:pointer;
-    }
-    .faqItem:hover{
-      background:#eef5ff;
-    }
-    .faqQuestion{
-      font-weight:700;
-      margin-bottom:6px;
-    }
-    .faqAnswer{
-      font-size:15px;
-      line-height:1.5;
-      white-space:pre-wrap;
-    }
+
+    .heading{font-size:20px;font-weight:800;margin:4px 0 12px 0;color:#0b1220}
+    .searchBox{display:flex;gap:8px;align-items:center;background:#f2f4f8;padding:10px;border-radius:12px;border:1px solid var(--border)}
+    .searchBox input{border:0;outline:none;background:transparent;font-size:14px;width:100%}
+
+    .top5Title{font-weight:800;margin:14px 0 8px 0}
+    .list{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding-right:6px}
+    .faqItem{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:10px;cursor:pointer;transition:all .22s; text-decoration:none;color:inherit}
+    .faqItem:hover{background:rgba(15,98,254,0.04);transform:translateY(-2px)}
+    .faqItem strong{font-size:14px}
+
+    .imagesCard{background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--border);box-shadow:0 10px 24px rgba(10,20,40,0.03)}
+    .imgWrap{height:340px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border)}
+    .imgWrap img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+
+    .qaCard{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);box-shadow:0 8px 28px rgba(10,20,40,0.04)}
+    .qaTitle{font-size:24px;font-weight:800;margin-bottom:8px;color:#0c2446}
+    .qaBody{font-size:15px;color:#333;white-space:pre-wrap;line-height:1.6;padding:12px;border-radius:8px;background:#fff;border:1px solid var(--border)}
+    .actionsRow{display:flex;gap:10px;align-items:center;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.primary{background:var(--accent);color:#fff}
+    .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--accent)}
+    .small{font-size:13px;color:var(--muted)}
+
+    .ratingRow{display:flex;gap:8px;margin-top:12px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f3f6ff;border:1px solid #e9f0ff;font-weight:700;color:#0b3a91}
+
+    .allToggle{cursor:pointer;color:var(--muted);font-weight:700;margin-top:8px}
+    .footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* suggestion box */
+    .suggestions{position:relative}
+    .suggestBox{position:absolute;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;z-index:80;max-height:260px;overflow:auto;padding:6px;margin-top:6px;box-shadow:0 12px 36px rgba(10,20,40,0.06)}
+    .suggestItem{padding:8px;border-radius:8px;cursor:pointer}
+    .suggestItem:hover{background:#f4f7ff}
+
+    /* subtle animation */
+    .qaCard.fade-in{animation:showUp .34s ease}
+    @keyframes showUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="banner">
+      <!-- include header.png in your repo (same folder) -->
+      <img id="headerImg" src="header.png" alt="BA Information Technology Services">
+    </div>
 
-  <div class="banner">
-    <img src="header.png" alt="BA Information Technology Services">
-  </div>
+    <div class="layout">
+      <div class="left">
+        <div class="heading">Frequently Asked Questions</div>
 
-  <div class="page">
+        <div style="position:relative;margin-bottom:10px;">
+          <div class="searchBox">
+            <svg width="16" height="16" viewBox="0 0 24 24" style="flex:0 0 18px"><path d="M21 21l-4.35-4.35" stroke="#444" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <input id="searchInput" placeholder="Search FAQs (question or answer)" autocomplete="off">
+            <button id="refreshBtn" class="btn ghost" style="margin-left:6px">Refresh</button>
+          </div>
+          <div id="suggestions" class="suggestions" style="display:none"></div>
+        </div>
 
-    <div class="left">
-      <div class="searchBox">
-        <input id="searchInput" placeholder="Search FAQs…">
+        <div class="top5Title">Top FAQs</div>
+        <div id="top5" class="list"></div>
+
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:800">All FAQs</div>
+          <div class="allToggle" id="toggleAllBtn">▾</div>
+        </div>
+        <div id="allList" class="list" style="margin-top:8px;max-height:320px"></div>
       </div>
-      <div id="faqList"></div>
+
+      <div class="right">
+        <div id="imagesCard" class="imagesCard">
+          <div class="imgWrap" id="imgWrap">
+            <img id="rightImage" alt="FAQ image">
+          </div>
+        </div>
+
+        <div id="qaCard" class="qaCard">
+          <div id="qaTitle" class="qaTitle">Select a question to view the answer</div>
+          <div id="qaBody" class="qaBody" style="min-height:120px">Answers will appear here.</div>
+
+          <div class="ratingRow" style="margin-top:14px">
+            <div class="pill" id="approveBtn" title="Click to say this was helpful">👍 Helpful</div>
+            <div class="pill" id="disapproveBtn" title="Click to say this was not helpful">👎 Not helpful</div>
+            <div style="flex:1"></div>
+            <div class="small">Your feedback helps us improve — thank you.</div>
+          </div>
+
+          <div class="actionsRow">
+            <button id="openAllBtn" class="btn ghost">View all FAQs (expand)</button>
+            <button id="exitBtn" class="btn primary" style="margin-left:auto">Close</button>
+          </div>
+        </div>
+
+      </div>
     </div>
 
-    <div class="right">
-      <div id="faqDisplay" style="color:#666;">Select a question to view the answer.</div>
-    </div>
-
+    <div class="footer">BA Information Technology Services</div>
   </div>
 
-<script>
-const FAQ_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOB7XYnfn0V6i8HkQQc7nXDv7nDL-s0TN_tJdpBU-tQgOQh-4sTv6vOc5_CZf6ldK5RsjcAZfiMTiD/pub?gid=0&single=true&output=csv";
+  <script>
+    // === CONFIG ===
+    // Use the published CSV link you confirmed earlier:
+    const FAQ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOB7XYnfn0V6i8HkQQc7nXDv7nDL-s0TN_tJdpBU-tQgOQh-4sTv6vOc5_CZf6ldK5RsjcAZfiMTiD/pub?gid=0&single=true&output=csv";
 
-function parseCSV(text){
-  const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-  return rows.map(r => {
-    const cols = r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
-      .map(c => c.replace(/^"|"$/g,""));
-    return cols;
-  });
-}
+    // Admin email for feedback mailto (change if you want)
+    const ADMIN_EMAIL = "baits2k23@gmail.com";
 
-async function loadFAQs(){
-  const res = await fetch(FAQ_CSV_URL);
-  const text = await res.text();
-  const rows = parseCSV(text);
+    // Basic CSV parsing (handles quoted values)
+    function parseCsv(text){
+      const rows = text.split(/\r?\n/).filter(r=>r.trim().length>0);
+      const out = rows.map(r => {
+        // split on commas not within quotes
+        const cols = r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"(.*)"$/, '$1'));
+        return cols;
+      });
+      return out;
+    }
 
-  if(rows.length < 2){
-    document.getElementById("faqList").innerHTML =
-      "<div>No FAQs found.</div>";
-    return;
-  }
+    // Normalize header names -> lower trimmed
+    function indexHeaders(headerRow){
+      const map = {};
+      headerRow.forEach((h,i)=>{
+        const key = String(h||'').toLowerCase().trim();
+        map[key] = i;
+      });
+      return map;
+    }
 
-  const headers = rows.shift().map(h=>h.trim().toLowerCase());
-  
-  const faqs = rows.map(r => {
-    return {
-      question: r[headers.indexOf("question")] || "",
-      answer: r[headers.indexOf("answer")] || ""
-    };
-  });
+    // Extract fields robustly
+    function buildFaqObjects(rows){
+      // rows: array of arrays; first row is header
+      const header = rows[0].map(h => String(h||'').trim());
+      const idx = indexHeaders(header);
+      const objs = [];
+      for(let i=1;i<rows.length;i++){
+        const r = rows[i];
+        const obj = {};
+        obj.raw = r;
+        // prefer header names used in your apps script:
+        obj.id = r[idx['id']] || r[idx['Id']] || r[idx['id']] || (Math.random().toString(36).slice(2,9));
+        obj.question = r[idx['question']] || r[idx['question?']] || r[idx['q']] || r[idx['question ']] || r[idx['question? ']] || r[idx[0]] || '';
+        obj.answer = r[idx['answer']] || r[idx['a']] || r[idx[1]] || '';
+        obj.imageUrls = r[idx['imageurl']] || r[idx['imageurls']] || r[idx['image url']] || r[idx['image']] || '';
+        obj.order = Number(r[idx['order']] || r[idx['sort']] || 0) || 0;
+        const visibleRaw = String(r[idx['visible']] || r[idx['show']] || '').toLowerCase().trim();
+        obj.visible = visibleRaw === '' ? true : (visibleRaw !== 'false' && visibleRaw !== '0' && visibleRaw !== 'no');
+        objs.push(obj);
+      }
+      return objs;
+    }
 
-  renderList(faqs);
-}
+    // ============================
+    // UI wiring
+    let allFaqs = [];
+    let visibleFaqs = [];
+    let rightImages = [];
+    let currentFaq = null;
 
-function renderList(faqs){
-  const list = document.getElementById("faqList");
-  list.innerHTML = "";
+    const top5El = document.getElementById('top5');
+    const allListEl = document.getElementById('allList');
+    const qaTitleEl = document.getElementById('qaTitle');
+    const qaBodyEl = document.getElementById('qaBody');
+    const rightImgEl = document.getElementById('rightImage');
+    const searchInput = document.getElementById('searchInput');
+    const suggestionsEl = document.getElementById('suggestions');
 
-  faqs.forEach((f, i) => {
-    const div = document.createElement("div");
-    div.className = "faqItem";
-    div.innerHTML = `<div class="faqQuestion">${f.question}</div>`;
-    div.onclick = () => {
-      document.getElementById("faqDisplay").innerHTML =
-        `<div class="faqQuestion">${f.question}</div>
-         <div class="faqAnswer">${f.answer}</div>`;
-    };
-    list.appendChild(div);
-  });
-}
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-document.getElementById("searchInput").addEventListener("input", async function(){
-  const q = this.value.toLowerCase();
+    // Render helpers
+    function renderTop5(){
+      top5El.innerHTML = '';
+      const top = visibleFaqs.slice(0,5);
+      top.forEach(f=>{
+        const a = document.createElement('a');
+        a.className = 'faqItem';
+        a.innerHTML = '<strong>' + escapeHtml(f.question) + '</strong>';
+        a.href = 'javascript:void(0)';
+        a.addEventListener('click', ()=> openFaq(f));
+        top5El.appendChild(a);
+      });
+    }
+    function renderAll(list){
+      allListEl.innerHTML = '';
+      (list || visibleFaqs).forEach(f=>{
+        const a = document.createElement('a');
+        a.className = 'faqItem';
+        a.innerHTML = '<div style="flex:1"><strong>' + escapeHtml(f.question) + '</strong></div>';
+        a.href = 'javascript:void(0)';
+        a.addEventListener('click', ()=> openFaq(f));
+        allListEl.appendChild(a);
+      });
+    }
 
-  const res = await fetch(FAQ_CSV_URL);
-  const text = await res.text();
-  const rows = parseCSV(text);
-  rows.shift();
-  const headers = rows[0];
+    function showRightImage(url){
+      if(!url){
+        rightImgEl.src = 'https://via.placeholder.com/800x500?text=No+image';
+        return;
+      }
+      // attempt to convert Drive link to uc? link if necessary
+      const driveId = extractDriveId(url);
+      if(driveId) rightImgEl.src = 'https://drive.google.com/uc?export=view&id=' + driveId;
+      else rightImgEl.src = url;
+    }
 
-  const all = rows.map(r => ({
-    question: r[1] || "",
-    answer: r[2] || ""
-  }));
+    function openFaq(f){
+      currentFaq = f;
+      qaTitleEl.textContent = f.question || 'No question';
+      qaBodyEl.textContent = f.answer || 'No answer available.';
+      qaBodyEl.parentElement.classList.add('fade-in');
+      setTimeout(()=> qaBodyEl.parentElement.classList.remove('fade-in'), 400);
+      // find image if any (imageUrls may be pipe-separated)
+      const list = (f.imageUrls || '').split('|').map(s=>s.trim()).filter(Boolean);
+      const pick = list.length ? list[0] : '';
+      showRightImage(pick);
+    }
 
-  const filtered = all.filter(f =>
-    f.question.toLowerCase().includes(q) ||
-    f.answer.toLowerCase().includes(q)
-  );
+    // search & suggestions
+    let searchTimer = null;
+    searchInput.addEventListener('input', (e)=>{
+      clearTimeout(searchTimer);
+      const q = e.target.value || '';
+      if(!q.trim()){ suggestionsEl.style.display='none'; renderAll(); return; }
+      searchTimer = setTimeout(()=>{
+        const results = visibleFaqs.filter(f => (f.question + ' ' + f.answer).toLowerCase().indexOf(q.toLowerCase()) !== -1).slice(0,12);
+        if(!results.length){ suggestionsEl.style.display='none'; return; }
+        suggestionsEl.style.display='block';
+        suggestionsEl.innerHTML = '<div class="suggestBox"></div>';
+        const box = suggestionsEl.querySelector('.suggestBox');
+        results.forEach(it=>{
+          const d = document.createElement('div');
+          d.className = 'suggestItem';
+          d.textContent = it.question;
+          d.addEventListener('click', ()=>{
+            openFaq(it);
+            suggestionsEl.style.display='none';
+            searchInput.value = '';
+          });
+          box.appendChild(d);
+        });
+      }, 180);
+    });
 
-  renderList(filtered);
-});
+    // Approve / Disapprove handling: open mailto to admin with prefilled subject/body
+    document.getElementById('approveBtn').addEventListener('click', ()=>{
+      if(!currentFaq) { alert('Please select a question first.'); return; }
+      const subject = encodeURIComponent('FAQ Feedback — Helpful: ' + (currentFaq.id || currentFaq.question));
+      const body = encodeURIComponent('FAQ ID: ' + (currentFaq.id || '') + '\nQuestion: ' + (currentFaq.question || '') + '\n\nI found this helpful.\n\n(You may add optional notes here)');
+      window.location.href = 'mailto:' + ADMIN_EMAIL + '?subject=' + subject + '&body=' + body;
+    });
+    document.getElementById('disapproveBtn').addEventListener('click', ()=>{
+      if(!currentFaq) { alert('Please select a question first.'); return; }
+      const subject = encodeURIComponent('FAQ Feedback — Not helpful: ' + (currentFaq.id || currentFaq.question));
+      const body = encodeURIComponent('FAQ ID: ' + (currentFaq.id || '') + '\nQuestion: ' + (currentFaq.question || '') + '\n\nThis was not helpful because:\n- ');
+      window.location.href = 'mailto:' + ADMIN_EMAIL + '?subject=' + subject + '&body=' + body;
+    });
 
-loadFAQs();
-</script>
+    document.getElementById('refreshBtn').addEventListener('click', ()=> {
+      loadFaqs(true);
+    });
 
+    document.getElementById('openAllBtn').addEventListener('click', ()=>{
+      // expand and scroll to all
+      const all = document.getElementById('allList');
+      all.style.display = 'block';
+      document.getElementById('toggleAllBtn').textContent = '▾';
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+
+    document.getElementById('toggleAllBtn').addEventListener('click', ()=>{
+      const all = document.getElementById('allList');
+      if(!all.style.display || all.style.display === 'none'){ all.style.display = 'block'; document.getElementById('toggleAllBtn').textContent = '▾'; }
+      else { all.style.display = 'none'; document.getElementById('toggleAllBtn').textContent = '▸'; }
+    });
+
+    document.getElementById('exitBtn').addEventListener('click', ()=>{
+      qaTitleEl.textContent = 'Select a question to view the answer';
+      qaBodyEl.textContent = 'Answers will appear here.';
+      showRightImage('');
+    });
+
+    // Utility to extract Drive id from many formats
+    function extractDriveId(s){
+      if(!s) return null;
+      s = String(s).trim();
+      const m = s.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
+      if(m && m[1]) return m[1];
+      const q = s.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+      if(q && q[1]) return q[1];
+      if(/^[a-zA-Z0-9_-]{10,}$/.test(s)) return s;
+      return null;
+    }
+
+    // Fetch, parse and render
+    async function loadFaqs(force=false){
+      try{
+        // fetch CSV
+        const res = await fetch(FAQ_CSV_URL, {cache: force ? 'no-store' : 'default'});
+        if(!res.ok) throw new Error('Failed to fetch FAQs CSV: ' + res.status);
+        const txt = await res.text();
+        const rows = parseCsv(txt);
+        if(rows.length < 2) { top5El.innerHTML = '<div class="small">No FAQs found.</div>'; allListEl.innerHTML=''; return; }
+        const objs = buildFaqObjects(rows);
+        // filter visible and sort by order desc (matching apps script behavior)
+        allFaqs = objs.slice().sort((a,b) => (b.order || 0) - (a.order || 0));
+        visibleFaqs = allFaqs.filter(f=>f.visible);
+        // build rightImages: collect first image from each visible faq that has imageUrls
+        rightImages = [];
+        visibleFaqs.forEach(f=>{
+          const u = (f.imageUrls || '').split('|').map(s=>s.trim()).filter(Boolean)[0];
+          if(u) rightImages.push(u);
+        });
+        // render top5 & all
+        renderTop5();
+        renderAll();
+        // set first right image (if any)
+        if(rightImages.length) showRightImage(rightImages[0]);
+        else showRightImage('');
+        // auto-open first FAQ if available
+        if(visibleFaqs.length) openFaq(visibleFaqs[0]);
+      } catch(err){
+        console.error(err);
+        top5El.innerHTML = '<div class="small">Unable to load FAQs. Check the published CSV URL and network.</div>';
+        allListEl.innerHTML = '';
+        showRightImage('');
+      }
+    }
+
+    // initial load
+    loadFaqs();
+
+    // small UX: hide suggestions if click outside
+    window.addEventListener('click', (e)=> {
+      const s = document.getElementById('suggestions');
+      if(!s) return;
+      if(!s.contains(e.target) && e.target !== searchInput) s.style.display='none';
+    });
+
+  </script>
 </body>
 </html>
